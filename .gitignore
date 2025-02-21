@@ -45,4 +45,4 @@ app.*.map.json
 #vulnerabilities
 
 lib/resume_constants.dart
-assets
+/assets/
