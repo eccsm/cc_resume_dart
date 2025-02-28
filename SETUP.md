@@ -40,9 +40,22 @@ ENV=development
 
 ## Security Notes
 
-- Never commit any of the actual configuration files containing your API keys or other sensitive information
-- Always keep these files in the `.gitignore` list
+> ⚠️ **IMPORTANT SECURITY WARNING**
+>
+> Previous commits contained sensitive API keys and Firebase credentials in `lib/firebase_options.dart` and `android/app/google-services.json`. These files have been added to `.gitignore`, but the API keys may still be exposed in the Git history!
+>
+> **Actions Required:**
+> 
+> 1. Rotate your Firebase API keys in the Firebase console immediately
+> 2. Update your local configuration files with the new keys
+> 3. Consider using [BFG Repo-Cleaner](https://rtyley.github.io/bfg-repo-cleaner/) or `git filter-branch` to remove sensitive data from Git history
+> 4. **NEVER** commit any files containing API keys or secrets going forward
+>
+> For additional guidance on removing sensitive data from your repository, see [GitHub's guide on removing sensitive data](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository)
+
+- Always keep sensitive files in the `.gitignore` list
 - Use example files without sensitive information for documentation purposes
+- Consider using environment variables or secure secret management solutions
 
 ## Troubleshooting
 
