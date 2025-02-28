@@ -87,7 +87,7 @@ flutter:
         - asset: assets/fonts/times.ttf
     - family: Calibri
       fonts:
-        - asset: assets/fonts/calibri.ttf
+        - asset: assets/fonts/calibrI.ttf
 
 
   # The following line ensures that the Material Icons font is
