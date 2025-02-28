@@ -61,7 +61,6 @@ secrets.json
 
 # Sensitive resume data
 lib/resume_constants_private.dart
-/assets/fonts/Ekincan_Casim*.json
 
 # Local configurations
 lib/config.local.dart
