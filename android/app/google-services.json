@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "332567030532",
+    "project_id": "resume-63067",
+    "storage_bucket": "resume-63067.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:332567030532:android:c2bd40ad96c92016357e51",
+        "android_client_info": {
+          "package_name": "net.casim.cc_resume_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDxJOKfOzBw4FCFp3V57vgepTCVyI_p770"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

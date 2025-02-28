@@ -1,35 +1,54 @@
-{
-    "name": "cc_resume_app",
-    "short_name": "cc_resume_app",
-    "start_url": ".",
-    "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
-    "orientation": "portrait-primary",
-    "prefer_related_applications": false,
-    "icons": [
-        {
-            "src": "icons/Icon-192.png",
-            "sizes": "192x192",
-            "type": "image/png"
-        },
-        {
-            "src": "icons/Icon-512.png",
-            "sizes": "512x512",
-            "type": "image/png"
-        },
-        {
-            "src": "icons/Icon-maskable-192.png",
-            "sizes": "192x192",
-            "type": "image/png",
-            "purpose": "maskable"
-        },
-        {
-            "src": "icons/Icon-maskable-512.png",
-            "sizes": "512x512",
-            "type": "image/png",
-            "purpose": "maskable"
-        }
-    ]
+{
+    "name": "Ekincan Casim | Resume",
+    "short_name": "Ekincan Casim",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#303F9F",
+    "theme_color": "#303F9F",
+    "description": "Interactive resume of Ekincan Casim showcasing skills and experience.",
+    "orientation": "portrait-primary",
+    "prefer_related_applications": false,
+    "id": "resume-63067.web.app",
+    "scope": "/",
+    "related_applications": [],
+    "icons": [
+        {
+            "src": "icons/Icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-maskable-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "icons/Icon-maskable-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ],
+    "screenshots": [
+        {
+            "src": "screenshots/desktop.png",
+            "sizes": "1280x720",
+            "type": "image/png",
+            "platform": "web",
+            "label": "Ekincan Casim Resume on Desktop"
+        },
+        {
+            "src": "screenshots/mobile.png",
+            "sizes": "750x1334",
+            "type": "image/png",
+            "platform": "web",
+            "label": "Ekincan Casim Resume on Mobile"
+        }
+    ]
 }
