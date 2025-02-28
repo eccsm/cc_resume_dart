@@ -9,25 +9,43 @@ import 'package:cc_resume_app/widgets/navigation_pane.dart';
 import 'package:cc_resume_app/widgets/section_card.dart';
 import 'package:cc_resume_app/widgets/skills_section.dart';
 import 'package:cc_resume_app/widgets/social_icons_row.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:firebase_core/firebase_core.dart';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
 import 'package:responsive_framework/responsive_framework.dart';
-// Import other necessary packages and widgets
+import 'firebase_options.dart';
 
-void main() {
-  runApp(const ResumeApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize Firebase
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  
+  // Initialize Firebase Analytics
+  final FirebaseAnalytics analytics = FirebaseAnalytics.instance;
+  
+  runApp(ResumeApp(analytics: analytics));
 }
 
 class ResumeApp extends StatelessWidget {
-  const ResumeApp({super.key});
+  final FirebaseAnalytics analytics;
+  
+  const ResumeApp({super.key, required this.analytics});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'eccsm',
+      title: 'Ekincan Casim',
       debugShowCheckedModeBanner: false,
+      navigatorObservers: [
+        FirebaseAnalyticsObserver(analytics: analytics),
+      ],
       builder: (context, widget) => ResponsiveBreakpoints.builder(
         child: widget!,
         breakpoints: const [
