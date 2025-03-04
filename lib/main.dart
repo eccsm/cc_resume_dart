@@ -1,11 +1,13 @@
 // lib/main.dart
 
+import 'package:cc_resume_app/env_config.dart';
 import 'package:cc_resume_app/pdf/pdf_generator.dart';
 import 'package:cc_resume_app/resume_constants.dart';
 import 'package:cc_resume_app/widgets/chatbot_icon_widget.dart';
 import 'package:cc_resume_app/widgets/draggable_chat_widget.dart';
 import 'package:cc_resume_app/widgets/experience_card.dart';
 import 'package:cc_resume_app/widgets/navigation_pane.dart';
+import 'package:cc_resume_app/widgets/pinned_git_repos_widget.dart';
 import 'package:cc_resume_app/widgets/section_card.dart';
 import 'package:cc_resume_app/widgets/skills_section.dart';
 import 'package:cc_resume_app/widgets/social_icons_row.dart';
@@ -26,7 +28,7 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  
+  await EnvConfig.init();
   // Initialize Firebase Analytics
   final FirebaseAnalytics analytics = FirebaseAnalytics.instance;
   
@@ -93,7 +95,7 @@ class _ResumePageState extends State<ResumePage> with WidgetsBindingObserver {
     'skills': GlobalKey(),
     'experience': GlobalKey(),
     'education': GlobalKey(),
-    // Add more keys as needed
+    'github_repos': GlobalKey(),
   };
 
   // Add a ScrollController
@@ -188,6 +190,7 @@ class _ResumePageState extends State<ResumePage> with WidgetsBindingObserver {
         const SnackBar(content: Text('PDF Exported Successfully!')),
       );
     } catch (e, stackTrace) {
+      // ignore: use_build_context_synchronously
       Navigator.of(context).pop(); // Close the loading dialog
 
       // Log the error details
@@ -247,7 +250,13 @@ class _ResumePageState extends State<ResumePage> with WidgetsBindingObserver {
             ),
           ),
 
-          // Add more sections as needed (e.g., Certifications, Projects)
+          Container(
+          key: _sectionKeys['github_repos'], // Add this key to your _sectionKeys map
+          child: const SectionCard(
+            title: 'GitHub Projects',
+            content: PinnedGithubReposWidget(),
+          ),
+        ),
         ],
       ),
     );
@@ -275,7 +284,7 @@ class _ResumePageState extends State<ResumePage> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     // Determine if the screen is large enough to show a persistent navigation pane
     bool isLargeScreen = ResponsiveBreakpoints.of(context).largerThan(TABLET);
-
+    
     return Scaffold(
       // Conditionally include AppBar
       appBar: isLargeScreen
