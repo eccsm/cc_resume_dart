@@ -75,7 +75,6 @@ dev_dependencies:
 # The following section is specific to Flutter packages.
 flutter:
   assets:
-    - .env
     - assets/images/background.jpg
     - assets/images/profile_picture.png
     - assets/images/seker_icon.png
