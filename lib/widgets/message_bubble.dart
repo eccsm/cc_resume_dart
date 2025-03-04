@@ -1,70 +1,115 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter/services.dart';
 
-class MessageBubble extends StatelessWidget {
+class OptimizedMessageBubble extends StatelessWidget {
   final String text;
   final bool isUser;
 
-  const MessageBubble({
-    super.key,
+  const OptimizedMessageBubble({
+    Key? key,
     required this.text,
     required this.isUser,
-  });
+  }) : super(key: key);
 
-  @override
-  Widget build(BuildContext context) {
-    // Define bubble colors
-    final Color userBubbleColor = Colors.indigo.shade100;
-    final Color botBubbleColor = Colors.grey.shade300;
+  // Build a widget for normal text.
+  Widget _buildNormalText(String content) {
+    return Text(
+      content,
+      style: const TextStyle(fontSize: 16, color: Colors.white),
+    );
+  }
 
-    // Define text colors
-    const Color userTextColor = Colors.black;
-    const Color botTextColor = Colors.black;
-
-    return Align(
-      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.7,
-        ),
-        margin: const EdgeInsets.symmetric(vertical: 5),
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
-        decoration: BoxDecoration(
-          color: isUser ? userBubbleColor : botBubbleColor,
-          borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(12),
-            topRight: const Radius.circular(12),
-            bottomLeft: Radius.circular(isUser ? 12 : 0),
-            bottomRight: Radius.circular(isUser ? 0 : 12),
+  // Build a widget for a code block with a copy button.
+  Widget _buildCodeBlock(BuildContext context, String code) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.grey[900],
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Tools row with a copy button.
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.copy, size: 20, color: Colors.white70),
+                tooltip: 'Copy Code',
+                onPressed: () async {
+                  await Clipboard.setData(ClipboardData(text: code));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Code copied to clipboard')),
+                  );
+                },
+              ),
+            ],
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.shade400,
-              offset: const Offset(2, 2),
-              blurRadius: 4,
-            ),
-          ],
-        ),
-        // AnimatedSwitcher will animate text changes smoothly.
-        child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 300),
-          transitionBuilder: (Widget child, Animation<double> animation) {
-            return FadeTransition(
-              opacity: animation,
-              child: child,
-            );
-          },
-          child: Text(
-            text,
-            key: ValueKey<String>(text),
-            style: GoogleFonts.lato(
-              textStyle: TextStyle(
-                color: isUser ? userTextColor : botTextColor,
-                fontSize: 16,
+          // Code content in a horizontal scroll view.
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: SelectableText(
+              code,
+              style: const TextStyle(
+                fontFamily: 'monospace',
+                fontSize: 14,
+                color: Colors.greenAccent,
               ),
             ),
           ),
-        ),
+        ],
+      ),
+    );
+  }
+
+  // Splits the message text into normal and code block segments.
+  List<Widget> _buildContent(BuildContext context) {
+    // This regex captures code blocks delimited by triple backticks and ignores any language tag.
+    final RegExp codeBlockRegExp = RegExp(r'```(?:\w+)?\n([\s\S]*?)```');
+    final matches = codeBlockRegExp.allMatches(text);
+    List<Widget> widgets = [];
+    int lastIndex = 0;
+
+    for (final match in matches) {
+      // Add normal text preceding the code block.
+      if (match.start > lastIndex) {
+        final normalText = text.substring(lastIndex, match.start).trim();
+        if (normalText.isNotEmpty) {
+          widgets.add(_buildNormalText(normalText));
+        }
+      }
+      // Extract code block content.
+      final codeContent = match.group(1)?.trim() ?? "";
+      if (codeContent.isNotEmpty) {
+        widgets.add(_buildCodeBlock(context, codeContent));
+      }
+      lastIndex = match.end;
+    }
+    // Add any remaining text after the last code block.
+    if (lastIndex < text.length) {
+      final remainingText = text.substring(lastIndex).trim();
+      if (remainingText.isNotEmpty) {
+        widgets.add(_buildNormalText(remainingText));
+      }
+    }
+    return widgets;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isUser ? Colors.blue : Colors.grey[700],
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: _buildContent(context),
       ),
     );
   }

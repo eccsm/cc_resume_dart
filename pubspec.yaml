@@ -45,7 +45,9 @@ dependencies:
   flutter_screenutil: ^5.9.3
   eventsource3: ^1.0.1
   image_picker: ^1.1.2
-  
+  url_launcher: ^6.3.1
+  flutter_dotenv: ^5.2.1
+
   # Firebase packages
   firebase_core: ^3.12.1
   firebase_analytics: ^11.4.4
@@ -73,6 +75,7 @@ dev_dependencies:
 # The following section is specific to Flutter packages.
 flutter:
   assets:
+    - .env
     - assets/images/background.jpg
     - assets/images/profile_picture.png
     - assets/images/seker_icon.png

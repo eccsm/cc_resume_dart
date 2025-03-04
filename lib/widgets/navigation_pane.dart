@@ -1,6 +1,7 @@
 // lib/widgets/navigation_pane.dart
 
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'profile_picture.dart';
 import 'social_icons_row.dart';
 
@@ -56,7 +57,7 @@ class NavigationPane extends StatelessWidget {
       {'title': 'Skills', 'icon': Icons.code, 'section': 'skills'}, // Updated link
       {'title': 'Experience', 'icon': Icons.work, 'section': 'experience'},
       {'title': 'Education', 'icon': Icons.school, 'section': 'education'},
-      // Add more links as needed
+      {'title': 'Github Projects', 'icon': FontAwesomeIcons.github, 'section': 'github_repos'},
     ];
 
     return isDrawer
