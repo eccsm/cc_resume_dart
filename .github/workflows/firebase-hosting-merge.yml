@@ -13,7 +13,10 @@ jobs:
           flutter-version: '3.29.0'
           channel: 'stable'
       - run: flutter pub get
-      # Inject the resume_constants file from secret
+      - name: Create .env file
+        run: echo "$MY_ENV_VARS" > .env
+        env:
+          MY_ENV_VARS: ${{ secrets.MY_ENV_VARS }}
       - name: Create resume_constants.dart
         run: echo "$RESUME_CONSTANTS" > lib/resume_constants.dart
         env:
