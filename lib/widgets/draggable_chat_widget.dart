@@ -32,14 +32,12 @@ class _DraggableChatWidgetState extends State<DraggableChatWidget> {
   bool _isModelChanging = false;
   Timer? _modelChangeTimer;
   String _currentModelMessages = "";
-  bool _chatWaiting = false;
   Timer? _chatWaitTimer;
   String _currentFunnyChatMessage = "";
 
   void _startChatWaitTimer() {
     _currentFunnyChatMessage = EnvConfig.randomChatMessage();
     setState(() {
-      _chatWaiting = true;
     });
 
     _chatWaitTimer ??= Timer.periodic(const Duration(seconds: 2), (timer) {
@@ -53,7 +51,6 @@ class _DraggableChatWidgetState extends State<DraggableChatWidget> {
     _chatWaitTimer?.cancel();
     _chatWaitTimer = null;
     setState(() {
-      _chatWaiting = false;
     });
   }
 

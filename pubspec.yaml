@@ -53,6 +53,8 @@ dependencies:
   firebase_analytics: ^11.4.4
   firebaseapis: ^0.2.0  # For web hosting
   firebase_performance: ^0.10.1+4  # For performance monitoring
+  open_filex: ^4.7.0
+  path_provider: ^2.1.5
   
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -75,6 +77,7 @@ dev_dependencies:
 # The following section is specific to Flutter packages.
 flutter:
   assets:
+    - .env
     - assets/images/background.jpg
     - assets/images/profile_picture.png
     - assets/images/seker_icon.png
