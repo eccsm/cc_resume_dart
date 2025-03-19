@@ -2,70 +2,107 @@
 
 import 'package:flutter/material.dart';
 import 'package:cc_resume_app/resume_constants.dart';
+import 'section_card.dart';
 
 class SkillsSection extends StatelessWidget {
-  const SkillsSection({super.key});
+  final bool animate;
+
+  const SkillsSection({
+    super.key,
+    this.animate = true,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        ...ResumeConstants.skills.entries.map((categoryEntry) {
-          final category = categoryEntry.key;
-          final subcategories = categoryEntry.value;
-
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  category,
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                ...subcategories.entries.map((subEntry) {
-                  final subcategory = subEntry.key;
-                  final skills = subEntry.value;
-
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          subcategory,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Wrap(
-                          spacing: 8.0,
-                          runSpacing: 4.0,
-                          children: skills.map((skill) {
-                            return Chip(
-                              label: Text(skill),
-                              backgroundColor: Colors.yellow.shade50.withOpacity(0.5),
-                            );
-                          }).toList(),
-                        ),
-                      ],
-                    ),
-                  );
-                }),
-              ],
+    // Define colors for different skill categories
+    final Map<String, Color> categoryColors = {
+      'Programming Languages': Colors.blue.shade700,
+      'Frontend Technologies': Colors.teal.shade600,
+      'Databases': const Color(0xFFFBAD48),
+      'Backend Technologies': Colors.purple.shade600,
+      'Cloud & DevOps': Colors.deepPurple.shade300,
+      'Machine Learning & LLMs': Colors.yellow.shade400,
+      'Version Control & Collaboration': Colors.green.shade200,
+      'Testing & Quality Assurance': Colors.red.shade200,
+      'Project & Issue Management': Colors.red.shade700
+    };
+    
+    return SectionCard(
+      title: "Skills",
+      icon: Icons.code,
+      animate: animate,
+      content: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (var categoryEntry in ResumeConstants.skills.entries)
+            _buildCategorySection(
+              categoryEntry.key, 
+              categoryEntry.value, 
+              categoryColors[categoryEntry.key] ?? Colors.red
             ),
-          );
-        }),
-      ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCategorySection(String category, Map<String, List<String>> subcategories, Color color) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.2),
+              border: Border(left: BorderSide(color: color, width: 4)),
+            ),
+            child: Text(
+              category,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                overflow: TextOverflow.ellipsis,
+              ),
+              maxLines: 1,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (var subcategoryEntry in subcategories.entries)
+                for (var skill in subcategoryEntry.value)
+                  _buildSkillChip(skill, color),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSkillChip(String skill, Color color) {
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 150),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.15),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: color.withOpacity(0.4)),
+        ),
+        child: Text(
+          skill,
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.white.withOpacity(0.9),
+          ),
+          overflow: TextOverflow.ellipsis,
+          maxLines: 1,
+        ),
+      ),
     );
   }
 }

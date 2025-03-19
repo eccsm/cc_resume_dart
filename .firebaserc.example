@@ -1,8 +1,0 @@
-{
-  "projects": {
-    "default": "YOUR_PROJECT_ID",
-    "hosting": "YOUR_PROJECT_ID"
-  },
-  "targets": {},
-  "etags": {}
-}

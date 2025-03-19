@@ -67,11 +67,9 @@ lib/config.local.dart
 
 # Generated files
 lib/generated/
-lib/generated_plugin_registrant.dart
 lib/firebase_options.dart
 
 # Web related
-lib/generated_plugin_registrant.dart
 web/firebase-config.js
 
 # Coverage reports
