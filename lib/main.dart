@@ -1,48 +1,39 @@
+// lib/main.dart
+import 'dart:typed_data';
+
 import 'package:cc_resume_app/env_config.dart';
 import 'package:cc_resume_app/resume_constants.dart';
-import 'package:cc_resume_app/widgets/chatbot_icon_widget.dart';
+import 'package:cc_resume_app/widgets/enhanced_chatbot_widget.dart';
 import 'package:cc_resume_app/widgets/draggable_chat_widget.dart';
-import 'package:cc_resume_app/widgets/experience_card.dart';
 import 'package:cc_resume_app/widgets/navigation_pane.dart';
 import 'package:cc_resume_app/widgets/pinned_git_repos_widget.dart';
-import 'package:cc_resume_app/widgets/section_card.dart';
-import 'package:cc_resume_app/widgets/skills_section.dart';
 import 'package:cc_resume_app/widgets/social_icons_row.dart';
-import 'package:firebase_analytics/firebase_analytics.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/foundation.dart';
-
+import 'package:cc_resume_app/widgets/timeline_experience_card.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:responsive_framework/responsive_framework.dart';
 import 'api_config.dart';
-import 'firebase_options.dart';
+import 'widgets/section_card.dart';
+import 'widgets/skills_section.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
   await EnvConfig.init();
-  final FirebaseAnalytics analytics = FirebaseAnalytics.instance;
   
-  runApp(ResumeApp(analytics: analytics));
+  runApp(const ResumeApp());
 }
 
 class ResumeApp extends StatelessWidget {
-  final FirebaseAnalytics analytics;
   
-  const ResumeApp({super.key, required this.analytics});
+  const ResumeApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Ekincan Casim',
       debugShowCheckedModeBanner: false,
-      navigatorObservers: [
-        FirebaseAnalyticsObserver(analytics: analytics),
-      ],
+
       builder: (context, widget) => ResponsiveBreakpoints.builder(
         child: widget!,
         breakpoints: const [
@@ -53,6 +44,12 @@ class ResumeApp extends StatelessWidget {
         ],
       ),
       theme: ThemeData(
+        primaryColor: const Color(0xFFFBAD48),
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.indigo,
+          brightness: Brightness.light,
+        ),
         textTheme: GoogleFonts.oswaldTextTheme(
           Theme.of(context).textTheme,
         ).copyWith(
@@ -66,7 +63,19 @@ class ResumeApp extends StatelessWidget {
             color: Colors.black87,
           ),
         ),
-        primarySwatch: Colors.grey,
+        // Add app bar theme for consistent styling
+        appBarTheme: AppBarTheme(
+          backgroundColor: Colors.grey.shade900.withOpacity(0.85),
+          elevation: 4,
+          shadowColor: Colors.black.withOpacity(0.5),
+          foregroundColor: Colors.white,
+          titleTextStyle: GoogleFonts.oswald(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+          iconTheme: const IconThemeData(color: Colors.white),
+        ),
       ),
       home: const ResumePage(),
     );
@@ -80,13 +89,13 @@ class ResumePage extends StatefulWidget {
   State<ResumePage> createState() => _ResumePageState();
 }
 
-class _ResumePageState extends State<ResumePage> with WidgetsBindingObserver {
+class _ResumePageState extends State<ResumePage> with TickerProviderStateMixin, WidgetsBindingObserver {
   bool _chatOpen = false;
 
   final Map<String, GlobalKey> _sectionKeys = {
     'professional_summary': GlobalKey(),
-    'skills': GlobalKey(),
     'experience': GlobalKey(),
+    'skills': GlobalKey(),
     'education': GlobalKey(),
     'github_repos': GlobalKey(),
   };
@@ -97,16 +106,32 @@ class _ResumePageState extends State<ResumePage> with WidgetsBindingObserver {
 
   double _chatbotTop = 0;
   double _chatbotLeft = 0;
+  
+  // Animation controllers
+  late AnimationController _backgroundController;
+  late Animation<double> _backgroundAnimation;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    
+    // Initialize animation controllers
+    _backgroundController = AnimationController(
+      duration: const Duration(seconds: 30),
+      vsync: this,
+    )..repeat(reverse: true);
+    
+    _backgroundAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(_backgroundController);
+    
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final size = MediaQuery.of(context).size;
       setState(() {
-        _chatbotTop = size.height - 80; 
-        _chatbotLeft = size.width - 80; 
+        _chatbotTop = size.height - 100; 
+        _chatbotLeft = size.width - 100; 
       });
     });
   }
@@ -115,9 +140,9 @@ class _ResumePageState extends State<ResumePage> with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _scrollController.dispose();
+    _backgroundController.dispose();
     super.dispose();
   }
-
 
   @override
   void didChangeMetrics() {
@@ -153,107 +178,151 @@ class _ResumePageState extends State<ResumePage> with WidgetsBindingObserver {
   }
 
   Future<void> _exportPdf(BuildContext context) async {
-  showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (_) => const Center(child: CircularProgressIndicator()),
-  );
-
-  Uint8List? pdfBytes;
-  try {
-    pdfBytes = await ApiConfig.fetchResumePdf();
-  } catch (e, stackTrace) {
-    debugPrint('Error fetching PDF: $e\n$stackTrace');
-  }
-
-  // ignore: use_build_context_synchronously
-  Navigator.of(context).pop();
-
-  if (pdfBytes == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Failed to fetch PDF.')),
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(
+        child: CircularProgressIndicator(),
+      ),
     );
-    return;
+
+    Uint8List? pdfBytes;
+    try {
+      pdfBytes = await ApiConfig.fetchResumePdf();
+    } catch (e, stackTrace) {
+      debugPrint('Error fetching PDF: $e\n$stackTrace');
+    }
+
+    // ignore: use_build_context_synchronously
+    Navigator.of(context).pop();
+
+    if (pdfBytes == null) {
+      // ignore: use_build_context_synchronously
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to fetch PDF.')),
+      );
+      return;
+    }
+
+    // ignore: use_build_context_synchronously
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext ctx) {
+        return AlertDialog(
+          title: const Text('PDF'),
+          content: const Text('Do you want to open or download this PDF?'),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                Navigator.of(ctx).pop(); // Close this dialog
+                await ApiConfig.handleOpenPdf(context, pdfBytes!);
+              },
+              child: const Text('Open'),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.of(ctx).pop(); // Close this dialog
+                await ApiConfig.handleDownloadPdf(context, pdfBytes!);
+              },
+              child: const Text('Download'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
-  showDialog<void>(
-    // ignore: use_build_context_synchronously
-    context: context,
-    builder: (BuildContext ctx) {
-      return AlertDialog(
-        title: const Text('PDF'),
-        content: const Text('Do you want to open or download this PDF?'),
-        actions: [
-          TextButton(
-            onPressed: () async {
-              Navigator.of(ctx).pop(); // Close this dialog
-              await ApiConfig.handleOpenPdf(context, pdfBytes!);
-            },
-            child: const Text('Open'),
+  Widget _buildAnimatedBackground() {
+    return AnimatedBuilder(
+      animation: _backgroundAnimation,
+      builder: (context, child) {
+        return Container(
+          decoration: BoxDecoration(
+            image: DecorationImage(
+              image: const AssetImage('assets/images/background.jpg'),
+              fit: BoxFit.cover,
+              colorFilter: ColorFilter.mode(
+                Colors.white.withOpacity(0.45 + (_backgroundAnimation.value * 0.05)),
+                BlendMode.lighten,
+              ),
+            ),
           ),
-          TextButton(
-            onPressed: () async {
-              Navigator.of(ctx).pop(); // Close this dialog
-              await ApiConfig.handleDownloadPdf(context, pdfBytes!);
-            },
-            child: const Text('Download'),
-          ),
-        ],
-      );
-    },
-  );
-}
+        );
+      },
+    );
+  }
 
   Widget _buildResumeContent() {
+    bool isLargeScreen = ResponsiveBreakpoints.of(context).largerThan(TABLET);
+    
     return SingleChildScrollView(
       controller: _scrollController,
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            key: _sectionKeys['professional_summary'],
-            child: const SectionCard(
-              title: 'Ekincan Casim',
-              content: Text(
-                ResumeConstants.profileIntro,
-                style: TextStyle(fontSize: 16),
-              ),
-            ),
-          ),
-
-          Container(
-            key: _sectionKeys['skills'],
-            child: const SectionCard(
-              title: 'Skills',
-              content: SkillsSection(), 
-            ),
-          ),
-
-          Container(
-            key: _sectionKeys['experience'],
-            child: _buildExperienceSection(),
-          ),
-
-          Container(
-            key: _sectionKeys['education'],
-            child: const SectionCard(
-              title: 'Education',
-              content: Text(
-                ResumeConstants.educationSummary,
-                style: TextStyle(fontSize: 16),
-              ),
-            ),
-          ),
-
-          Container(
-          key: _sectionKeys['github_repos'], 
-          child: const SectionCard(
-            title: 'GitHub Projects',
-            content: PinnedGithubReposWidget(),
-          ),
+      padding: EdgeInsets.fromLTRB(
+        16, 
+        isLargeScreen ? 16 : 86, // Add extra top padding for mobile to account for AppBar
+        16, 
+        16
+      ),
+      physics: const BouncingScrollPhysics(),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          minHeight: MediaQuery.of(context).size.height - (isLargeScreen ? 100 : 180), // Adjust for AppBar
         ),
-        ],
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              key: _sectionKeys['professional_summary'],
+              child: const SectionCard(
+                title: 'About',
+                icon: Icons.person,
+                accentColor: Color(0xFFFBAD48),
+                content: Text(
+                  ResumeConstants.profileIntro,
+                  style: TextStyle(fontSize: 16, height: 1.6),
+                ),
+              ),
+            ),
+            
+            
+            Container(
+              key: _sectionKeys['experience'],
+              child: _buildExperienceSection(),
+            ),
+
+            Container(
+              key: _sectionKeys['skills'],
+              child: const Padding(
+                padding: EdgeInsets.symmetric(vertical: 12),
+                child: SkillsSection(),
+              ),
+            ),
+
+            Container(
+              key: _sectionKeys['education'],
+              child: const SectionCard(
+                title: 'Education',
+                icon: Icons.school,
+                accentColor: Color(0xFFFBAD48),
+                content: Text(
+                  ResumeConstants.educationSummary,
+                  style: TextStyle(fontSize: 16, height: 1.6),
+                ),
+              ),
+            ),
+
+            Container(
+              key: _sectionKeys['github_repos'], 
+              child: const SectionCard(
+                title: 'GitHub Projects',
+                icon: Icons.code_rounded,
+                accentColor: Color(0xFFFBAD48),
+                content: PinnedGithubReposWidget(),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -262,14 +331,32 @@ class _ResumePageState extends State<ResumePage> with WidgetsBindingObserver {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 12),
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+          child: Row(
+            children: [
+              Icon(Icons.work, color: Color(0xFFFBAD48), size: 28),
+              SizedBox(width: 12),
+              Text(
+                'Experience',
+                style: TextStyle(
+                  fontSize: 22, 
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFFFBAD48),
+                ),
+              ),
+            ],
+          ),
+        ),
         for (final experience in ResumeConstants.experiences)
-          ExperienceCard(
+          TimelineExperienceCard(
             title: experience.title,
             role: experience.role,
             location: experience.location,
+            period: '2022 - Present', // You should add this field to your model
             points: experience.points,
             notableProjects: experience.notableProjects,
+            accentColor: const Color(0xFFFBAD48),
           ),
       ],
     );
@@ -280,18 +367,15 @@ class _ResumePageState extends State<ResumePage> with WidgetsBindingObserver {
     bool isLargeScreen = ResponsiveBreakpoints.of(context).largerThan(TABLET);
     
     return Scaffold(
+      extendBodyBehindAppBar: false, // Changed to false for mobile sticky header
       appBar: isLargeScreen
           ? null
           : AppBar(
-              actions: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                  child: SocialIconsRow(
-                    includePdfExport: true,
-                    onPdfExport: () => _exportPdf(context),
-                  ),
-                ),
-              ],
+              backgroundColor: Colors.grey.shade900.withOpacity(0.95),
+              elevation: 4,
+              shadowColor: Colors.black.withOpacity(0.5),
+              toolbarHeight: 60,
+              titleSpacing: 0,
             ),
       drawer: isLargeScreen
           ? null
@@ -303,19 +387,15 @@ class _ResumePageState extends State<ResumePage> with WidgetsBindingObserver {
             ),
       body: Stack(
         children: [
-          Container(
-            decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/images/background.jpg'),
-                fit: BoxFit.cover,
-              ),
-            ),
-          ),
+          // Animated background
+          _buildAnimatedBackground(),
+          
+          // Main content
           Row(
             children: [
               if (isLargeScreen)
                 SizedBox(
-                  width: 250,
+                  width: 280, // Adjusted to match your enhanced navigation pane
                   child: NavigationPane(
                     isDrawer: false, 
                     onPdfExport: () => _exportPdf(context),
@@ -334,10 +414,12 @@ class _ResumePageState extends State<ResumePage> with WidgetsBindingObserver {
               ),
             ],
           ),
+          
+          // Floating chat button
           Positioned(
             top: _chatbotTop,
             left: _chatbotLeft,
-            child: ChatbotIconWidget(
+            child: EnhancedChatbotWidget(
               onTap: _toggleChat,
               onDragEnd: (newPosition) {
                 setState(() {

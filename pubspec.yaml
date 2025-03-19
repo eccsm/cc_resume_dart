@@ -47,12 +47,6 @@ dependencies:
   image_picker: ^1.1.2
   url_launcher: ^6.3.1
   flutter_dotenv: ^5.2.1
-
-  # Firebase packages
-  firebase_core: ^3.12.1
-  firebase_analytics: ^11.4.4
-  firebaseapis: ^0.2.0  # For web hosting
-  firebase_performance: ^0.10.1+4  # For performance monitoring
   open_filex: ^4.7.0
   path_provider: ^2.1.5
   

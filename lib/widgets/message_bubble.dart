@@ -6,10 +6,10 @@ class OptimizedMessageBubble extends StatelessWidget {
   final bool isUser;
 
   const OptimizedMessageBubble({
-    Key? key,
+    super.key,
     required this.text,
     required this.isUser,
-  }) : super(key: key);
+  });
 
   // Build a widget for normal text.
   Widget _buildNormalText(String content) {
