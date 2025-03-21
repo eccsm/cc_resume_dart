@@ -1,13 +1,14 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:cc_resume_app/env_config.dart';
+
 import 'package:cc_resume_app/widgets/message.dart';
 import 'package:cc_resume_app/widgets/message_bubble.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
-import '../api_config.dart';
+import '../config/api_config.dart';
+import '../config/env_config.dart';
 import 'chat_page.dart';
 
 class DraggableChatWidget extends StatefulWidget {

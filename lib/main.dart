@@ -1,18 +1,16 @@
 // lib/main.dart
-import 'dart:typed_data';
 
-import 'package:cc_resume_app/env_config.dart';
-import 'package:cc_resume_app/resume_constants.dart';
+import 'package:cc_resume_app/config/env_config.dart';
+import 'package:cc_resume_app/pdf/resume_constants.dart';
 import 'package:cc_resume_app/widgets/enhanced_chatbot_widget.dart';
 import 'package:cc_resume_app/widgets/draggable_chat_widget.dart';
 import 'package:cc_resume_app/widgets/navigation_pane.dart';
 import 'package:cc_resume_app/widgets/pinned_git_repos_widget.dart';
-import 'package:cc_resume_app/widgets/social_icons_row.dart';
 import 'package:cc_resume_app/widgets/timeline_experience_card.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:responsive_framework/responsive_framework.dart';
-import 'api_config.dart';
+import 'config/api_config.dart';
 import 'widgets/section_card.dart';
 import 'widgets/skills_section.dart';
 
@@ -177,60 +175,8 @@ class _ResumePageState extends State<ResumePage> with TickerProviderStateMixin, 
     }
   }
 
-  Future<void> _exportPdf(BuildContext context) async {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const Center(
-        child: CircularProgressIndicator(),
-      ),
-    );
+  
 
-    Uint8List? pdfBytes;
-    try {
-      pdfBytes = await ApiConfig.fetchResumePdf();
-    } catch (e, stackTrace) {
-      debugPrint('Error fetching PDF: $e\n$stackTrace');
-    }
-
-    // ignore: use_build_context_synchronously
-    Navigator.of(context).pop();
-
-    if (pdfBytes == null) {
-      // ignore: use_build_context_synchronously
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to fetch PDF.')),
-      );
-      return;
-    }
-
-    // ignore: use_build_context_synchronously
-    showDialog<void>(
-      context: context,
-      builder: (BuildContext ctx) {
-        return AlertDialog(
-          title: const Text('PDF'),
-          content: const Text('Do you want to open or download this PDF?'),
-          actions: [
-            TextButton(
-              onPressed: () async {
-                Navigator.of(ctx).pop(); // Close this dialog
-                await ApiConfig.handleOpenPdf(context, pdfBytes!);
-              },
-              child: const Text('Open'),
-            ),
-            TextButton(
-              onPressed: () async {
-                Navigator.of(ctx).pop(); // Close this dialog
-                await ApiConfig.handleDownloadPdf(context, pdfBytes!);
-              },
-              child: const Text('Download'),
-            ),
-          ],
-        );
-      },
-    );
-  }
 
   Widget _buildAnimatedBackground() {
     return AnimatedBuilder(
@@ -259,14 +205,14 @@ class _ResumePageState extends State<ResumePage> with TickerProviderStateMixin, 
       controller: _scrollController,
       padding: EdgeInsets.fromLTRB(
         16, 
-        isLargeScreen ? 16 : 86, // Add extra top padding for mobile to account for AppBar
+        isLargeScreen ? 16 : 86, 
         16, 
         16
       ),
       physics: const BouncingScrollPhysics(),
       child: ConstrainedBox(
         constraints: BoxConstraints(
-          minHeight: MediaQuery.of(context).size.height - (isLargeScreen ? 100 : 180), // Adjust for AppBar
+          minHeight: MediaQuery.of(context).size.height - (isLargeScreen ? 100 : 180), 
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -353,7 +299,7 @@ class _ResumePageState extends State<ResumePage> with TickerProviderStateMixin, 
             title: experience.title,
             role: experience.role,
             location: experience.location,
-            period: '2022 - Present', // You should add this field to your model
+            period: '2022 - Present', 
             points: experience.points,
             notableProjects: experience.notableProjects,
             accentColor: const Color(0xFFFBAD48),
@@ -367,7 +313,7 @@ class _ResumePageState extends State<ResumePage> with TickerProviderStateMixin, 
     bool isLargeScreen = ResponsiveBreakpoints.of(context).largerThan(TABLET);
     
     return Scaffold(
-      extendBodyBehindAppBar: false, // Changed to false for mobile sticky header
+      extendBodyBehindAppBar: false,
       appBar: isLargeScreen
           ? null
           : AppBar(
@@ -381,7 +327,7 @@ class _ResumePageState extends State<ResumePage> with TickerProviderStateMixin, 
           ? null
           : NavigationPane(
               isDrawer: true, 
-              onPdfExport: () => _exportPdf(context),
+              onPdfExport: () => ApiConfig.exportResumePdf(context),
               onNavigate: _scrollToSection, 
               activeSection: _activeSection,
             ),
@@ -395,10 +341,10 @@ class _ResumePageState extends State<ResumePage> with TickerProviderStateMixin, 
             children: [
               if (isLargeScreen)
                 SizedBox(
-                  width: 280, // Adjusted to match your enhanced navigation pane
+                  width: 280, 
                   child: NavigationPane(
                     isDrawer: false, 
-                    onPdfExport: () => _exportPdf(context),
+                    onPdfExport: () => ApiConfig.exportResumePdf(context),
                     onNavigate: _scrollToSection, 
                     activeSection: _activeSection, 
                   ),

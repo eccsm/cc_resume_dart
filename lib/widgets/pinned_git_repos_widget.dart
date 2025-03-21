@@ -1,8 +1,10 @@
-import 'package:cc_resume_app/env_config.dart';
+
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+
+import '../config/env_config.dart';
 
 class PinnedGithubReposWidget extends StatefulWidget {
   const PinnedGithubReposWidget({

@@ -1,7 +1,7 @@
 // lib/widgets/skills_section.dart
 
 import 'package:flutter/material.dart';
-import 'package:cc_resume_app/resume_constants.dart';
+import 'package:cc_resume_app/pdf/resume_constants.dart';
 import 'section_card.dart';
 
 class SkillsSection extends StatelessWidget {
