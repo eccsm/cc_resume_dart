@@ -3,7 +3,9 @@
 import 'package:enhanced_url_launcher/enhanced_url_launcher.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:cc_resume_app/resume_constants.dart';
+
+import '../pdf/resume_constants.dart';
+
 
 class SocialIconsRow extends StatelessWidget {
   final bool includePdfExport;

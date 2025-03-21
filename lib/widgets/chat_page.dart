@@ -5,8 +5,8 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../api_config.dart';
-import '../env_config.dart';
+import '../config/api_config.dart';
+import '../config/env_config.dart';
 import 'message.dart';
 import 'message_bubble.dart';
 
