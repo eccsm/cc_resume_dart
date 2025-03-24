@@ -1,4 +1,4 @@
-// lib/widgets/enhanced_section_card.dart
+// lib/widgets/section_card.dart
 
 import 'package:flutter/material.dart';
 
@@ -28,7 +28,16 @@ class SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveAccentColor = accentColor ?? Theme.of(context).primaryColor;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final effectiveAccentColor = accentColor ?? theme.primaryColor;
+    
+    // Theme-specific colors
+    final cardBackgroundColor = isDark ? Colors.grey.shade900.withOpacity(0.85) : Colors.white.withOpacity(0.9);
+    final headerBackgroundColor = isDark ? Colors.black87.withOpacity(0.9) : Colors.grey.shade100;
+    final headerBorderColor = effectiveAccentColor.withOpacity(0.3);
+    final cardBorderColor = isDark ? Colors.grey.shade800 : Colors.grey.shade300;
+    final textColor = isDark ? Colors.white : Colors.black87;
     
     return TweenAnimationBuilder<double>(
       duration: animate ? const Duration(milliseconds: 800) : Duration.zero,
@@ -45,7 +54,7 @@ class SectionCard extends StatelessWidget {
       child: Container(
         margin: margin,
         decoration: BoxDecoration(
-          color: Colors.grey.shade900.withOpacity(0.85),
+          color: cardBackgroundColor,
           borderRadius: BorderRadius.circular(borderRadius),
           boxShadow: [
             BoxShadow(
@@ -55,7 +64,7 @@ class SectionCard extends StatelessWidget {
             ),
           ],
           border: Border.all(
-            color: Colors.grey.shade800,
+            color: cardBorderColor,
             width: 1,
           ),
         ),
@@ -66,14 +75,14 @@ class SectionCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.black87.withOpacity(0.9),
+                color: headerBackgroundColor,
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(borderRadius),
                   topRight: Radius.circular(borderRadius),
                 ),
                 border: Border(
                   bottom: BorderSide(
-                    color: effectiveAccentColor.withOpacity(0.3),
+                    color: headerBorderColor,
                     width: 1,
                   ),
                 ),
@@ -94,7 +103,8 @@ class SectionCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: headerFontSize,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: textColor,
+                        inherit: true,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -106,9 +116,10 @@ class SectionCard extends StatelessWidget {
             Padding(
               padding: contentPadding,
               child: DefaultTextStyle(
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: textColor,
                   fontSize: 14,
+                  inherit: true,
                 ),
                 child: content,
               ),

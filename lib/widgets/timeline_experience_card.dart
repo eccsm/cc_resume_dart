@@ -1,3 +1,5 @@
+// lib/widgets/timeline_experience_card.dart
+
 import 'package:flutter/material.dart';
 
 class TimelineExperienceCard extends StatefulWidget {
@@ -31,6 +33,17 @@ class _TimelineExperienceCardState extends State<TimelineExperienceCard> {
 
   @override
   Widget build(BuildContext context) {
+    // Get theme data
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
+    // Set theme-appropriate colors
+    final effectiveAccentColor = widget.accentColor ?? theme.primaryColor;
+    final textColor = theme.textTheme.bodyLarge?.color ?? Colors.white;
+    final cardColor = isDark ? Colors.grey.shade900.withOpacity(0.85) : Colors.white;
+    final headerColor = isDark ? Colors.grey.shade900 : Colors.grey.shade50;
+    final borderColor = isDark ? Colors.grey.shade800 : Colors.grey.shade300;
+    
     return Padding(
       padding: const EdgeInsets.only(left: 8.0, bottom: 16.0),
       child: Row(
@@ -44,7 +57,7 @@ class _TimelineExperienceCardState extends State<TimelineExperienceCard> {
                   width: 20,
                   height: 20,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.9),
+                    color: isDark ? Colors.grey.shade800 : Colors.white,
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
@@ -54,15 +67,15 @@ class _TimelineExperienceCardState extends State<TimelineExperienceCard> {
                       ),
                     ],
                     border: Border.all(
-                      color: widget.accentColor ?? Colors.grey.shade800,
+                      color: effectiveAccentColor,
                       width: 2,
                     ),
                   ),
                 ),
                 Container(
                   width: 2,
-                  height: 200,
-                  color: widget.accentColor ?? Colors.grey.shade700,
+                  height: _expanded ? 320 : 200,
+                  color: effectiveAccentColor.withOpacity(0.6),
                 ),
               ],
             ),
@@ -82,32 +95,34 @@ class _TimelineExperienceCardState extends State<TimelineExperienceCard> {
                 );
               },
               child: Card(
-                color: Colors.grey.shade900.withOpacity(0.85),
+                color: cardColor,
                 elevation: 2,
                 margin: const EdgeInsets.only(bottom: 8, top: 4),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                   side: BorderSide(
-                    color: widget.accentColor?.withOpacity(0.3) ?? Colors.grey.shade800,
-                    width: 1,
+                    color: _expanded 
+                        ? effectiveAccentColor.withOpacity(0.5) 
+                        : borderColor,
+                    width: _expanded ? 2 : 1,
                   ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Header with dark background
+                    // Header with theme-appropriate background
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.black87.withOpacity(0.9),
+                        color: headerColor,
                         borderRadius: const BorderRadius.only(
                           topLeft: Radius.circular(12),
                           topRight: Radius.circular(12),
                         ),
                         border: Border(
                           bottom: BorderSide(
-                            color: widget.accentColor?.withOpacity(0.3) ?? Colors.grey.shade800,
+                            color: effectiveAccentColor.withOpacity(0.3),
                             width: 1,
                           ),
                         ),
@@ -117,10 +132,10 @@ class _TimelineExperienceCardState extends State<TimelineExperienceCard> {
                         children: [
                           Text(
                             widget.title,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                              color: textColor,
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -130,18 +145,18 @@ class _TimelineExperienceCardState extends State<TimelineExperienceCard> {
                               Expanded(
                                 child: Text(
                                   widget.role,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 14,
-                                    color: Colors.white,
+                                    color: textColor.withOpacity(0.9),
                                   ),
                                 ),
                               ),
                               Text(
                                 widget.period,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 14,
                                   fontStyle: FontStyle.italic,
-                                  color: Colors.white,
+                                  color: textColor.withOpacity(0.7),
                                 ),
                               ),
                             ],
@@ -151,7 +166,7 @@ class _TimelineExperienceCardState extends State<TimelineExperienceCard> {
                             widget.location,
                             style: TextStyle(
                               fontSize: 14,
-                              color: Colors.white.withOpacity(0.9),
+                              color: textColor.withOpacity(0.7),
                             ),
                           ),
                         ],
@@ -173,17 +188,17 @@ class _TimelineExperienceCardState extends State<TimelineExperienceCard> {
                                 children: [
                                   Icon(
                                     Icons.arrow_right_alt,
-                                    color: widget.accentColor?.withOpacity(0.85) ?? Colors.white.withOpacity(0.85),
+                                    color: effectiveAccentColor.withOpacity(0.85),
                                     size: 20,
                                   ),
                                   const SizedBox(width: 4),
                                   Expanded(
                                     child: Text(
                                       point,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 14,
                                         height: 1.3,
-                                        color: Colors.white,
+                                        color: textColor,
                                       ),
                                     ),
                                   ),
@@ -203,7 +218,7 @@ class _TimelineExperienceCardState extends State<TimelineExperienceCard> {
                               children: [
                                 Icon(
                                   Icons.work_outline,
-                                  color: widget.accentColor?.withOpacity(0.9) ?? Colors.white.withOpacity(0.9),
+                                  color: effectiveAccentColor.withOpacity(0.9),
                                   size: 18,
                                 ),
                                 const SizedBox(width: 8),
@@ -212,7 +227,7 @@ class _TimelineExperienceCardState extends State<TimelineExperienceCard> {
                                   style: TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.white.withOpacity(0.95),
+                                    color: textColor,
                                   ),
                                 ),
                               ],
@@ -233,7 +248,7 @@ class _TimelineExperienceCardState extends State<TimelineExperienceCard> {
                                       height: 6,
                                       margin: const EdgeInsets.only(top: 6),
                                       decoration: BoxDecoration(
-                                        color: widget.accentColor?.withOpacity(0.7) ?? Colors.white.withOpacity(0.7),
+                                        color: effectiveAccentColor.withOpacity(0.7),
                                         shape: BoxShape.circle,
                                       ),
                                     ),
@@ -241,10 +256,10 @@ class _TimelineExperienceCardState extends State<TimelineExperienceCard> {
                                     Expanded(
                                       child: Text(
                                         project,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 13,
                                           height: 1.3,
-                                          color: Colors.white,
+                                          color: textColor,
                                           fontWeight: FontWeight.w500,
                                         ),
                                       ),
@@ -280,6 +295,9 @@ class _TimelineExperienceCardState extends State<TimelineExperienceCard> {
   }
 
   Widget _buildExpandButton(String text) {
+    final theme = Theme.of(context);
+    final effectiveAccentColor = widget.accentColor ?? theme.primaryColor;
+    
     return TextButton(
       onPressed: () {
         setState(() {
@@ -296,7 +314,7 @@ class _TimelineExperienceCardState extends State<TimelineExperienceCard> {
         children: [
           Icon(
             Icons.expand_more,
-            color: widget.accentColor?.withOpacity(0.7) ?? Colors.white.withOpacity(0.7),
+            color: effectiveAccentColor.withOpacity(0.7),
             size: 16,
           ),
           const SizedBox(width: 4),
@@ -304,7 +322,7 @@ class _TimelineExperienceCardState extends State<TimelineExperienceCard> {
             text,
             style: TextStyle(
               fontSize: 13,
-              color: widget.accentColor?.withOpacity(0.7) ?? Colors.white70,
+              color: effectiveAccentColor.withOpacity(0.7),
             ),
           ),
         ],
@@ -313,6 +331,9 @@ class _TimelineExperienceCardState extends State<TimelineExperienceCard> {
   }
 
   Widget _buildCollapseButton() {
+    final theme = Theme.of(context);
+    final effectiveAccentColor = widget.accentColor ?? theme.primaryColor;
+    
     return TextButton(
       onPressed: () {
         setState(() {
@@ -329,7 +350,7 @@ class _TimelineExperienceCardState extends State<TimelineExperienceCard> {
         children: [
           Icon(
             Icons.expand_less,
-            color: widget.accentColor?.withOpacity(0.7) ?? Colors.white.withOpacity(0.7),
+            color: effectiveAccentColor.withOpacity(0.7),
             size: 16,
           ),
           const SizedBox(width: 4),
@@ -337,7 +358,7 @@ class _TimelineExperienceCardState extends State<TimelineExperienceCard> {
             'Collapse',
             style: TextStyle(
               fontSize: 13,
-              color: widget.accentColor?.withOpacity(0.7) ?? Colors.white70,
+              color: effectiveAccentColor.withOpacity(0.7),
             ),
           ),
         ],
