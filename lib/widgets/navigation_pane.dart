@@ -1,7 +1,6 @@
 // lib/widgets/navigation_pane.dart
 
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'profile_picture.dart';
 import 'social_icons_row.dart';
 
@@ -10,6 +9,7 @@ class NavigationPane extends StatelessWidget {
   final VoidCallback? onPdfExport;
   final Function(String)? onNavigate;
   final String activeSection;
+  final List<Widget>? extraWidgets;
 
   const NavigationPane({
     super.key,
@@ -17,15 +17,20 @@ class NavigationPane extends StatelessWidget {
     this.onPdfExport,
     this.onNavigate,
     this.activeSection = '',
+    this.extraWidgets,
   });
 
   Widget _buildNavLink(BuildContext context, String title, IconData icon, String section) {
     bool isActive = section == activeSection;
     
-    const activeColor = Colors.white;
-    final inactiveColor = Colors.white.withOpacity(0.7);
-    final hoverColor = Colors.grey.shade800;
-    final selectedColor = Colors.black.withOpacity(0.4);
+    // Use theme-aware colors
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
+    const Color activeColor = Colors.white;
+    final Color inactiveColor = Colors.white.withOpacity(0.7);
+    final Color hoverColor = isDark ? Colors.grey.shade800 : Colors.grey.shade700;
+    final Color selectedColor = Colors.black.withOpacity(0.4);
     
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
@@ -51,6 +56,7 @@ class NavigationPane extends StatelessWidget {
             color: isActive ? activeColor : inactiveColor,
             fontSize: 15,
             fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+            inherit: true,
           ),
         ),
         onTap: () {
@@ -71,7 +77,7 @@ class NavigationPane extends StatelessWidget {
                 width: 4,
                 height: 24,
                 decoration: BoxDecoration(
-                  color: Theme.of(context).primaryColor,
+                  color: theme.primaryColor,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ) 
@@ -82,12 +88,24 @@ class NavigationPane extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
+    // Get appropriate colors based on the current theme
+    final backgroundColor1 = isDark ? Colors.grey.shade900 : Colors.grey.shade800;
+    final backgroundColor2 = isDark ? Colors.black : Colors.grey.shade900;
+    final dividerColor = isDark ? Colors.grey.shade700 : Colors.grey.shade600;
+    final borderColor = isDark ? Colors.grey.shade800 : Colors.grey.shade700;
+    
     final List<Map<String, dynamic>> navLinks = [
       {'title': 'About', 'icon': Icons.person_outline, 'section': 'professional_summary'},
-      {'title': 'Experience', 'icon': Icons.work_outline, 'section': 'experience'},
-      {'title': 'Skills', 'icon': Icons.code, 'section': 'skills'},
+      {'title': 'Skills Overview', 'icon': Icons.pie_chart, 'section': 'skills_overview'},
+      {'title': 'Professional Journey', 'icon': Icons.timeline, 'section': 'experience'},
+      {'title': 'Technical Skills', 'icon': Icons.code, 'section': 'skills'},
+      {'title': 'Certifications', 'icon': Icons.workspace_premium, 'section': 'certifications'},
+      {'title': 'Languages', 'icon': Icons.language, 'section': 'languages'},
       {'title': 'Education', 'icon': Icons.school_outlined, 'section': 'education'},
-      {'title': 'Projects', 'icon': FontAwesomeIcons.github, 'section': 'github_repos'},
+      {'title': 'Online Presence', 'icon': Icons.public, 'section': 'online_presence'},
     ];
 
     Widget contentWidget = Column(
@@ -146,7 +164,7 @@ class NavigationPane extends StatelessWidget {
             gradient: LinearGradient(
               colors: [
                 Colors.transparent,
-                Colors.grey.shade600,
+                dividerColor,
                 Colors.transparent,
               ],
             ),
@@ -171,13 +189,22 @@ class NavigationPane extends StatelessWidget {
           ),
         ),
         
+        // Extra widgets (e.g., Theme Toggle)
+        if (extraWidgets != null && extraWidgets!.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+            child: Column(
+              children: extraWidgets!,
+            ),
+          ),
+        
         Container(
           padding: const EdgeInsets.symmetric(vertical: 16.0),
           decoration: BoxDecoration(
             color: Colors.black.withOpacity(0.3),
             border: Border(
               top: BorderSide(
-                color: Colors.grey.shade800,
+                color: borderColor,
                 width: 1,
               ),
             ),
@@ -209,8 +236,8 @@ class NavigationPane extends StatelessWidget {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    Colors.grey.shade900,
-                    Colors.black,
+                    backgroundColor1,
+                    backgroundColor2,
                   ],
                 ),
               ),
@@ -224,8 +251,8 @@ class NavigationPane extends StatelessWidget {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  Colors.grey.shade900,
-                  Colors.black,
+                  backgroundColor1,
+                  backgroundColor2,
                 ],
               ),
               boxShadow: [
@@ -238,7 +265,7 @@ class NavigationPane extends StatelessWidget {
               ],
               border: Border(
                 right: BorderSide(
-                  color: Colors.grey.shade800,
+                  color: borderColor,
                   width: 1,
                 ),
               ),

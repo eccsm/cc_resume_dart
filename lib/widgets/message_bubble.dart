@@ -1,116 +1,136 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
-class OptimizedMessageBubble extends StatelessWidget {
+class MessageBubble extends StatelessWidget {
   final String text;
   final bool isUser;
+  final bool isDarkMode;
 
-  const OptimizedMessageBubble({
+  const MessageBubble({
     super.key,
     required this.text,
     required this.isUser,
+    this.isDarkMode = false,
   });
 
-  // Build a widget for normal text.
-  Widget _buildNormalText(String content) {
-    return Text(
-      content,
-      style: const TextStyle(fontSize: 16, color: Colors.white),
-    );
-  }
-
-  // Build a widget for a code block with a copy button.
-  Widget _buildCodeBlock(BuildContext context, String code) {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.grey[900],
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6.0),
+      child: Row(
+        mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Tools row with a copy button.
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.copy, size: 20, color: Colors.white70),
-                tooltip: 'Copy Code',
-                onPressed: () async {
-                  await Clipboard.setData(ClipboardData(text: code));
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Code copied to clipboard')),
-                  );
-                },
+          if (!isUser) _buildAvatar(),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              decoration: BoxDecoration(
+                color: isUser 
+                    ? (isDarkMode ? Colors.indigo[700] : Colors.indigo)
+                    : (isDarkMode ? Colors.grey[800] : Colors.grey[100]),
+                borderRadius: BorderRadius.only(
+                  topLeft: isUser ? const Radius.circular(16) : const Radius.circular(4),
+                  topRight: isUser ? const Radius.circular(4) : const Radius.circular(16),
+                  bottomLeft: const Radius.circular(16),
+                  bottomRight: const Radius.circular(16),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 2,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
               ),
-            ],
-          ),
-          // Code content in a horizontal scroll view.
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: SelectableText(
-              code,
-              style: const TextStyle(
-                fontFamily: 'monospace',
-                fontSize: 14,
-                color: Colors.greenAccent,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (!isUser)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Text(
+                        'Assistant',
+                        style: TextStyle(
+                          color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  Text(
+                    text,
+                    style: TextStyle(
+                      color: isUser 
+                          ? Colors.white 
+                          : (isDarkMode ? Colors.white : Colors.black87),
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Align(
+                    alignment: Alignment.bottomRight,
+                    child: Text(
+                      _getTimestamp(),
+                      style: TextStyle(
+                        color: isUser 
+                            ? Colors.white.withOpacity(0.7) 
+                            : (isDarkMode ? Colors.grey[500] : Colors.grey[600]),
+                        fontSize: 10,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
+          const SizedBox(width: 8),
+          if (isUser) _buildUserAvatar(),
         ],
       ),
     );
   }
-
-  // Splits the message text into normal and code block segments.
-  List<Widget> _buildContent(BuildContext context) {
-    // This regex captures code blocks delimited by triple backticks and ignores any language tag.
-    final RegExp codeBlockRegExp = RegExp(r'```(?:\w+)?\n([\s\S]*?)```');
-    final matches = codeBlockRegExp.allMatches(text);
-    List<Widget> widgets = [];
-    int lastIndex = 0;
-
-    for (final match in matches) {
-      // Add normal text preceding the code block.
-      if (match.start > lastIndex) {
-        final normalText = text.substring(lastIndex, match.start).trim();
-        if (normalText.isNotEmpty) {
-          widgets.add(_buildNormalText(normalText));
-        }
-      }
-      // Extract code block content.
-      final codeContent = match.group(1)?.trim() ?? "";
-      if (codeContent.isNotEmpty) {
-        widgets.add(_buildCodeBlock(context, codeContent));
-      }
-      lastIndex = match.end;
-    }
-    // Add any remaining text after the last code block.
-    if (lastIndex < text.length) {
-      final remainingText = text.substring(lastIndex).trim();
-      if (remainingText.isNotEmpty) {
-        widgets.add(_buildNormalText(remainingText));
-      }
-    }
-    return widgets;
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  
+  Widget _buildAvatar() {
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      padding: const EdgeInsets.all(12),
+      width: 32,
+      height: 32,
       decoration: BoxDecoration(
-        color: isUser ? Colors.blue : Colors.grey[700],
-        borderRadius: BorderRadius.circular(8),
+        color: isDarkMode ? Colors.indigo[800] : Colors.indigo[100],
+        borderRadius: BorderRadius.circular(16),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: _buildContent(context),
+      child: Center(
+        child: Icon(
+          Icons.smart_toy_rounded,
+          size: 18,
+          color: isDarkMode ? Colors.white : Colors.indigo,
+        ),
       ),
     );
+  }
+  
+  Widget _buildUserAvatar() {
+    return Container(
+      width: 32,
+      height: 32,
+      decoration: BoxDecoration(
+        color: isDarkMode ? Colors.indigo[800] : Colors.indigo[100],
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Center(
+        child: Icon(
+          Icons.person,
+          size: 18,
+          color: isDarkMode ? Colors.white : Colors.indigo,
+        ),
+      ),
+    );
+  }
+  
+  String _getTimestamp() {
+    final now = DateTime.now();
+    final hour = now.hour.toString().padLeft(2, '0');
+    final minute = now.minute.toString().padLeft(2, '0');
+    return '$hour:$minute';
   }
 }

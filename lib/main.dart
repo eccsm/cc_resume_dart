@@ -7,31 +7,51 @@ import 'package:cc_resume_app/widgets/draggable_chat_widget.dart';
 import 'package:cc_resume_app/widgets/navigation_pane.dart';
 import 'package:cc_resume_app/widgets/pinned_git_repos_widget.dart';
 import 'package:cc_resume_app/widgets/timeline_experience_card.dart';
+import 'package:cc_resume_app/widgets/theme_toggle_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:responsive_framework/responsive_framework.dart';
 import 'config/api_config.dart';
+import 'widgets/badge_gallery_widget.dart';
+import 'widgets/certification_carousel_widget.dart';
+import 'widgets/github_activity_calendar_widget.dart';
+import 'widgets/language_proiciency_widget.dart';
 import 'widgets/section_card.dart';
 import 'widgets/skills_section.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
   await EnvConfig.init();
-  
   runApp(const ResumeApp());
 }
 
-class ResumeApp extends StatelessWidget {
-  
+class ResumeApp extends StatefulWidget {
   const ResumeApp({super.key});
 
   @override
+  State<ResumeApp> createState() => _ResumeAppState();
+}
+
+class _ResumeAppState extends State<ResumeApp> {
+  ThemeMode _themeMode = ThemeMode.system;
+  
+  void _toggleTheme(ThemeMode themeMode) {
+    setState(() {
+      _themeMode = themeMode;
+    });
+  }
+  
+  @override
   Widget build(BuildContext context) {
+    // Create consistent text themes with inherit=true
+    final lightTextTheme = _createTextTheme(Colors.black87, true);
+    final darkTextTheme = _createTextTheme(Colors.white, true);
+    
     return MaterialApp(
       title: 'Ekincan Casim',
       debugShowCheckedModeBanner: false,
-
+      themeMode: _themeMode,
+      
       builder: (context, widget) => ResponsiveBreakpoints.builder(
         child: widget!,
         breakpoints: const [
@@ -41,27 +61,17 @@ class ResumeApp extends StatelessWidget {
           Breakpoint(start: 1921, end: double.infinity, name: '4K'),
         ],
       ),
+      
+      // Light theme
       theme: ThemeData(
         primaryColor: const Color(0xFFFBAD48),
         useMaterial3: true,
+        brightness: Brightness.light,
         colorScheme: ColorScheme.fromSeed(
           seedColor: Colors.indigo,
           brightness: Brightness.light,
         ),
-        textTheme: GoogleFonts.oswaldTextTheme(
-          Theme.of(context).textTheme,
-        ).copyWith(
-          headlineMedium: GoogleFonts.oswald(
-            fontSize: 32,
-            fontWeight: FontWeight.bold,
-            color: Colors.indigo,
-          ),
-          bodyMedium: GoogleFonts.openSans(
-            fontSize: 16,
-            color: Colors.black87,
-          ),
-        ),
-        // Add app bar theme for consistent styling
+        textTheme: lightTextTheme,
         appBarTheme: AppBarTheme(
           backgroundColor: Colors.grey.shade900.withOpacity(0.85),
           elevation: 4,
@@ -74,14 +84,93 @@ class ResumeApp extends StatelessWidget {
           ),
           iconTheme: const IconThemeData(color: Colors.white),
         ),
+        cardTheme: CardTheme(
+          color: Colors.white,
+          shadowColor: Colors.black.withOpacity(0.2),
+          elevation: 4,
+        ),
+        scaffoldBackgroundColor: Colors.grey.shade50,
+        dividerColor: Colors.grey.shade300,
+        indicatorColor: const Color(0xFFFBAD48),
       ),
-      home: const ResumePage(),
+      
+      // Dark theme
+      darkTheme: ThemeData(
+        primaryColor: const Color(0xFFFBAD48),
+        useMaterial3: true,
+        brightness: Brightness.dark,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.indigo,
+          brightness: Brightness.dark,
+        ),
+        textTheme: darkTextTheme,
+        appBarTheme: AppBarTheme(
+          backgroundColor: Colors.grey.shade900,
+          elevation: 4,
+          shadowColor: Colors.black.withOpacity(0.5),
+          foregroundColor: Colors.white,
+          titleTextStyle: GoogleFonts.oswald(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+          iconTheme: const IconThemeData(color: Colors.white),
+        ),
+        cardTheme: CardTheme(
+          color: Colors.grey.shade900,
+          shadowColor: Colors.black.withOpacity(0.4),
+          elevation: 4,
+        ),
+        scaffoldBackgroundColor: Colors.black87,
+        dividerColor: Colors.grey.shade700,
+        indicatorColor: const Color(0xFFFBAD48),
+      ),
+      
+      home: ResumePage(onThemeChanged: _toggleTheme, currentTheme: _themeMode),
+    );
+  }
+  
+  // Helper method to create consistent text themes
+  TextTheme _createTextTheme(Color textColor, bool inherit) {
+    return GoogleFonts.oswaldTextTheme(
+      TextTheme(
+        displayLarge: TextStyle(color: textColor, inherit: inherit),
+        displayMedium: TextStyle(color: textColor, inherit: inherit),
+        displaySmall: TextStyle(color: textColor, inherit: inherit),
+        headlineLarge: TextStyle(color: textColor, inherit: inherit),
+        headlineMedium: TextStyle(
+          color: textColor, 
+          inherit: inherit, 
+          fontSize: 32, 
+          fontWeight: FontWeight.bold
+        ),
+        headlineSmall: TextStyle(color: textColor, inherit: inherit),
+        titleLarge: TextStyle(color: textColor, inherit: inherit),
+        titleMedium: TextStyle(color: textColor, inherit: inherit),
+        titleSmall: TextStyle(color: textColor, inherit: inherit),
+        bodyLarge: TextStyle(color: textColor, inherit: inherit),
+        bodyMedium: GoogleFonts.openSans(
+          fontSize: 16,
+          color: textColor,
+        ),
+        bodySmall: TextStyle(color: textColor, inherit: inherit),
+        labelLarge: TextStyle(color: textColor, inherit: inherit),
+        labelMedium: TextStyle(color: textColor, inherit: inherit),
+        labelSmall: TextStyle(color: textColor, inherit: inherit),
+      ),
     );
   }
 }
 
 class ResumePage extends StatefulWidget {
-  const ResumePage({super.key});
+  final Function(ThemeMode) onThemeChanged;
+  final ThemeMode currentTheme;
+  
+  const ResumePage({
+    super.key, 
+    required this.onThemeChanged,
+    required this.currentTheme,
+  });
 
   @override
   State<ResumePage> createState() => _ResumePageState();
@@ -92,16 +181,17 @@ class _ResumePageState extends State<ResumePage> with TickerProviderStateMixin, 
 
   final Map<String, GlobalKey> _sectionKeys = {
     'professional_summary': GlobalKey(),
+    'skills_overview': GlobalKey(),
     'experience': GlobalKey(),
     'skills': GlobalKey(),
+    'certifications': GlobalKey(),
+    'languages': GlobalKey(),
     'education': GlobalKey(),
-    'github_repos': GlobalKey(),
+    'online_presence': GlobalKey(),
   };
 
   final ScrollController _scrollController = ScrollController();
-
   String _activeSection = 'professional_summary'; 
-
   double _chatbotTop = 0;
   double _chatbotLeft = 0;
   
@@ -175,10 +265,10 @@ class _ResumePageState extends State<ResumePage> with TickerProviderStateMixin, 
     }
   }
 
-  
-
 
   Widget _buildAnimatedBackground() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
     return AnimatedBuilder(
       animation: _backgroundAnimation,
       builder: (context, child) {
@@ -188,8 +278,10 @@ class _ResumePageState extends State<ResumePage> with TickerProviderStateMixin, 
               image: const AssetImage('assets/images/background.jpg'),
               fit: BoxFit.cover,
               colorFilter: ColorFilter.mode(
-                Colors.white.withOpacity(0.45 + (_backgroundAnimation.value * 0.05)),
-                BlendMode.lighten,
+                isDarkMode 
+                  ? Colors.black.withOpacity(0.75 + (_backgroundAnimation.value * 0.05))
+                  : Colors.white.withOpacity(0.45 + (_backgroundAnimation.value * 0.05)),
+                isDarkMode ? BlendMode.darken : BlendMode.lighten,
               ),
             ),
           ),
@@ -200,6 +292,7 @@ class _ResumePageState extends State<ResumePage> with TickerProviderStateMixin, 
 
   Widget _buildResumeContent() {
     bool isLargeScreen = ResponsiveBreakpoints.of(context).largerThan(TABLET);
+    const accentColor = Color(0xFFFBAD48);
     
     return SingleChildScrollView(
       controller: _scrollController,
@@ -218,6 +311,7 @@ class _ResumePageState extends State<ResumePage> with TickerProviderStateMixin, 
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
+            // About section
             Container(
               key: _sectionKeys['professional_summary'],
               child: const SectionCard(
@@ -232,11 +326,13 @@ class _ResumePageState extends State<ResumePage> with TickerProviderStateMixin, 
             ),
             
             
+            // Experience section
             Container(
               key: _sectionKeys['experience'],
               child: _buildExperienceSection(),
             ),
 
+            // Technical Skills section
             Container(
               key: _sectionKeys['skills'],
               child: const Padding(
@@ -244,7 +340,49 @@ class _ResumePageState extends State<ResumePage> with TickerProviderStateMixin, 
                 child: SkillsSection(),
               ),
             ),
-
+            Container(
+              key: _sectionKeys['certifications'],
+              child: const SectionCard(
+                title: 'Certifications',
+                icon: Icons.workspace_premium,
+                accentColor: accentColor,
+                content: CertificationCarouselWidget(),
+                    ),
+                  ),
+                  
+                  Container(
+                    key: _sectionKeys['languages'],
+                    child: const SectionCard(
+                      title: 'Languages',
+                      icon: Icons.language,
+                      accentColor: accentColor,
+                      content: LanguageProficiencyWidget(
+                        languages: [
+                          LanguageProficiency(
+                            language: 'English',
+                            flagCode: 'us',
+                            readingLevel: 0.95,
+                            writingLevel: 0.9,
+                            speakingLevel: 0.85,
+                            listeningLevel: 0.95,
+                            certification: 'Maltepe University\n'
+                            'School of Foreign Languages - 80/100',
+                          ),
+                          LanguageProficiency(
+                            language: 'Turkish',
+                            flagCode: 'tr',
+                            readingLevel: 1.0,
+                            writingLevel: 1.0,
+                            speakingLevel: 1.0,
+                            listeningLevel: 1.0,
+                          ),
+                        ],
+                        accentColor: accentColor,
+                      ),
+                    ),
+                  ),
+            
+            // Education section
             Container(
               key: _sectionKeys['education'],
               child: const SectionCard(
@@ -257,14 +395,46 @@ class _ResumePageState extends State<ResumePage> with TickerProviderStateMixin, 
                 ),
               ),
             ),
-
+            
+            // Merged GitHub Projects with Online Presence
             Container(
-              key: _sectionKeys['github_repos'], 
-              child: const SectionCard(
-                title: 'GitHub Projects',
-                icon: Icons.code_rounded,
-                accentColor: Color(0xFFFBAD48),
-                content: PinnedGithubReposWidget(),
+              key: _sectionKeys['online_presence'],
+              child: SectionCard(
+                title: 'Online Presence & Projects',
+                icon: Icons.public,
+                accentColor: accentColor,
+                content: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // GitHub Projects
+                    Text(
+                      'GitHub Projects',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const PinnedGithubReposWidget(),
+                    
+                    const SizedBox(height: 32),
+                    Divider(color: Theme.of(context).dividerColor),
+                    const SizedBox(height: 32),
+                    
+                    // GitHub Activity Calendar
+                    const GitHubActivityCalendar(
+                      username: 'eccsm',
+                      numberOfWeeks: 20,
+                    ),
+                    const SizedBox(height: 32),
+                    const Divider(height: 1, color: Colors.grey),
+                    const SizedBox(height: 32),
+                    
+                    // Badge Gallery
+                    const BadgeGalleryWidget(),
+                  ],
+                ),
               ),
             ),
           ],
@@ -277,18 +447,18 @@ class _ResumePageState extends State<ResumePage> with TickerProviderStateMixin, 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
           child: Row(
             children: [
-              Icon(Icons.work, color: Color(0xFFFBAD48), size: 28),
-              SizedBox(width: 12),
+              Icon(Icons.work, color: Theme.of(context).primaryColor, size: 28),
+              const SizedBox(width: 12),
               Text(
                 'Experience',
                 style: TextStyle(
                   fontSize: 22, 
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFFFBAD48),
+                  color: Theme.of(context).primaryColor,
                 ),
               ),
             ],
@@ -302,7 +472,7 @@ class _ResumePageState extends State<ResumePage> with TickerProviderStateMixin, 
             period: '2022 - Present', 
             points: experience.points,
             notableProjects: experience.notableProjects,
-            accentColor: const Color(0xFFFBAD48),
+            accentColor: Theme.of(context).primaryColor,
           ),
       ],
     );
@@ -317,11 +487,18 @@ class _ResumePageState extends State<ResumePage> with TickerProviderStateMixin, 
       appBar: isLargeScreen
           ? null
           : AppBar(
-              backgroundColor: Colors.grey.shade900.withOpacity(0.95),
+              backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
               elevation: 4,
               shadowColor: Colors.black.withOpacity(0.5),
               toolbarHeight: 60,
               titleSpacing: 0,
+              actions: [
+                ThemeToggleWidget(
+                  onThemeChanged: widget.onThemeChanged,
+                  currentTheme: widget.currentTheme,
+                ),
+                const SizedBox(width: 8),
+              ],
             ),
       drawer: isLargeScreen
           ? null
@@ -346,7 +523,13 @@ class _ResumePageState extends State<ResumePage> with TickerProviderStateMixin, 
                     isDrawer: false, 
                     onPdfExport: () => ApiConfig.exportResumePdf(context),
                     onNavigate: _scrollToSection, 
-                    activeSection: _activeSection, 
+                    activeSection: _activeSection,
+                    extraWidgets: [
+                      ThemeToggleWidget(
+                        onThemeChanged: widget.onThemeChanged,
+                        currentTheme: widget.currentTheme,
+                      ),
+                    ],
                   ),
                 ),
               Expanded(
