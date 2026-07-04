@@ -36,19 +36,18 @@ class ResumeConstants {
   // =========================
   static const String profileHeader = '$name\n$title | Location: $location';
 
-  // FIX: Replaced generic phrases with specific, impact-led sentences.
-  // Mentions Allianz, Pegasus Airlines, and the insurance platform — real differentiators.
-  // Updated "Java 17" → "Java 21" to match current stack.
+  // Single source of truth: the website About section, the chatbot system
+  // prompt, and the PDF all render this text.
   static const String profileIntro =
-      'Software Architect and Senior Java Engineer with 10+ years building enterprise-scale platforms '
-      'in insurance, banking, and aviation. Architect of record on an Allianz legacy '
-      'transformation (Oracle ADF → Spring Boot 3.x) and a Kafka-backed microservices '
-      'platform currently in production at Medisa. Delivered an OpenAI-powered HR chatbot '
-      'for Pegasus Airlines with Redis-based intelligent caching and cost-optimized token '
-      'management. Expert in Java 21, Spring Boot 3.x, event-driven architectures '
-      '(Kafka, RabbitMQ), and cloud-native deployments on Kubernetes/AWS. Focused on '
-      'measurable outcomes: performance, observability, and eliminating technical debt '
-      'at enterprise scale.';
+      'Software Architect and Senior Java Engineer with 10+ years designing and '
+      'delivering enterprise-scale platforms in insurance, banking, and retail. '
+      'Track record of leading legacy-to-modern transformations (monolith → '
+      'microservices, Oracle ADF → Spring Boot 3.x), designing event-driven '
+      'architectures on Kafka, and embedding regulatory compliance (data '
+      'protection, auditability) into system design. Hands-on leader: architect '
+      'who still writes production code, mentors engineers, and drives decisions '
+      'through design reviews. Expert in Java 21, Spring Boot 3.x, domain-driven '
+      'design, and cloud-native delivery on Kubernetes.';
 
   // =========================
   // Skills
@@ -56,50 +55,37 @@ class ResumeConstants {
   // NOTE: SkillsSection reads this map correctly via ResumeConstants.skills.entries.
   // The structured subcategory format here is already better than the flat PDF list.
   static const Map<String, Map<String, List<String>>> skills = {
-    'Programming Languages': {
-      'Core Languages': ['Java', 'Kotlin', 'Python', 'JavaScript'],
-      'Scripting & Automation': ['Bash', 'Groovy'],
-      'Low-Code & Automation': ['OutSystems', 'cplacejs'],
+    'Languages': {
+      'Programming': ['Java (11–21)', 'Kotlin', 'Python', 'JavaScript/TypeScript', 'SQL'],
     },
-    'Backend Technologies': {
-      'Frameworks': ['Spring Boot', 'Spring Cloud', 'Quarkus', 'Micronaut'],
-      'API Development': ['REST', 'GraphQL', 'gRPC'],
-      'Integration Tools': ['Apache Kafka', 'RabbitMQ'],
+    'Backend & Architecture': {
+      'Frameworks': ['Spring Boot 3.x', 'Spring Cloud'],
+      'Architecture': ['Microservices', 'Domain-Driven Design', 'Event-Driven Architecture'],
+      'APIs & Messaging': ['REST', 'GraphQL', 'gRPC', 'Kafka', 'RabbitMQ', 'Redis'],
     },
-    'Databases': {
-      'RDBMS': ['PostgreSQL', 'MS SQL', 'Oracle', 'MySQL'],
-      'NoSQL': ['MongoDB', 'Cassandra', 'DynamoDB'],
-      'Search & Cache': ['Elasticsearch', 'Redis'],
-    },
-    'Frontend Technologies': {
-      'Frameworks & Libraries': ['Angular', 'React'],
-      'Core Tools': ['TypeScript'],
-      'UI/UX Libraries': ['Material-UI', 'Bootstrap'],
+    'Data': {
+      'Databases': ['Oracle', 'PostgreSQL', 'MS SQL', 'MongoDB', 'Elasticsearch'],
+      'Performance': ['JPA/Hibernate tuning', 'Batch processing at scale'],
     },
     'Cloud & DevOps': {
-      'Platforms': ['Microsoft Azure', 'Google Cloud Platform (GCP)', 'AWS'],
-      'Containerization & Orchestration': ['Docker', 'Kubernetes', 'Helm', 'Rancher', 'OpenShift'],
-      'CI/CD Tools': ['Jenkins', 'GitHub Actions', 'GitLab CI/CD', 'Bamboo'],
-      'Infrastructure as Code': ['Terraform', 'Ansible'],
-      'Observability': ['Dynatrace', 'ELK Stack'],
+      'Containers & Orchestration': ['Kubernetes', 'Docker', 'Helm', 'Rancher'],
+      'Platforms': ['Azure', 'AWS', 'GCP'],
+      'CI/CD & IaC': ['Jenkins', 'GitLab CI/CD', 'GitHub Actions', 'Terraform'],
     },
-    'Machine Learning & LLMs': {
-      'LLM & NLP': ['OpenAI APIs', 'Hugging Face Transformers'],
-      'Optimization': ['ONNX'],
-      'ML Frameworks': ['Scikit-Learn'],
+    'Quality & Observability': {
+      'Testing': ['TDD', 'JUnit', 'JMeter', 'Gatling'],
+      'Quality Gates & Monitoring': ['SonarQube', 'Dynatrace', 'Graylog', 'ELK'],
     },
-    'Version Control & Collaboration': {
-      'Tools': ['Git', 'GitHub', 'Bitbucket', 'GitLab'],
-      'Project Management': ['JIRA', 'Confluence'],
+    'Frontend (working knowledge)': {
+      'Frameworks': ['React', 'Angular'],
     },
-    'Testing & Quality Assurance': {
-      'Automation Tools': ['Selenium', 'JUnit', 'TestNG', 'Postman'],
-      'Performance Testing': ['Apache JMeter', 'Gatling'],
-      'Static Analysis': ['SonarQube', 'ESLint', 'Checkstyle'],
-    },
-    'Project & Issue Management': {
-      'Agile Tools': ['JIRA', 'Confluence', 'Trello', 'Asana'],
-      'Build Tools': ['Maven', 'Gradle', 'Bazel'],
+    'Practices': {
+      'Ways of Working': [
+        'Agile/Scrum',
+        'Technical mentorship',
+        'RFC-driven design reviews',
+        'Compliance-aware engineering (KVKK/GDPR)',
+      ],
     },
   };
 
@@ -115,22 +101,14 @@ class ResumeConstants {
       location: 'Istanbul, Turkey',
       period: 'Jul 2025 – Present',
       points: [
-        'Architecting and leading hands-on development of Java 17 microservices with Spring Boot 3.x for an enterprise insurance platform.',
-        'Decomposed overloaded insurance domains into bounded microservices, reducing inter-service coupling and improving independent deployability.',
-        'Designed event-driven policy issuance and claims handling flows using Kafka and Redis, improving real-time notification throughput.',
-        'Modernized Medisa\'s insurance systems into a microservices architecture integrated with React-based frontends.',
-        'Introduced standardized microservice templates, automated quality gates (SonarQube), and coding conventions — cutting developer onboarding time.',
-        'Migrated observability stack from ELK to Graylog, improving log aggregation performance and centralized monitoring.',
-        'Managed Rancher-orchestrated container deployments with Jenkins CI/CD pipelines, reducing release cycle duration.',
-        'Collaborating with frontend teams using React to deliver integrated, customer-facing insurance solutions.',
-      ],
-      notableProjects: [
-        'Insurance Domain Decomposition: Identified and extracted overloaded bounded contexts into independent microservices, improving scalability and team ownership boundaries.',
-        'Insurance Microservices Platform: Modernized Medisa\'s core insurance systems into Spring Boot 3.x microservices with React-based frontends, replacing a legacy monolith.',
-        'Graylog Migration: Replaced ELK Stack with Graylog for centralized log management, improving query performance and operational visibility.',
-        'Event-Driven Communication: Designed Kafka-backed event streams with Redis caching layers for policy issuance, claims handling, and real-time customer notifications.',
-        'Agile CI/CD Transformation: Integrated Jenkins pipelines and Rancher container deployments, reducing release cycles and improving deployment reliability.',
-        'Boilerplate Hardening: Automated quality gates and microservice templates, cutting onboarding time and reducing technical debt.',
+        'Architect and hands-on lead for an enterprise insurance platform built on Java 17/21 and Spring Boot 3.x, serving core policy and claims operations.',
+        'Decomposed overloaded insurance domains into bounded contexts and independent microservices using domain-driven design, improving deployability and team ownership.',
+        'Designed event-driven policy issuance and claims flows on Kafka with Redis caching, improving real-time notification throughput.',
+        'Implemented data-protection compliance (KVKK) at the architecture level — response-layer masking, data classification, and audit trails — in collaboration with legal and security stakeholders.',
+        'Built high-volume batch processing pipelines (hundreds of thousands of records) with proper transaction isolation, chunking, and index optimization.',
+        'Established engineering standards: microservice templates, SonarQube quality gates, and code review practices, cutting onboarding time and technical debt.',
+        'Migrated observability from ELK to Graylog and operate Dynatrace-based monitoring; investigate and resolve production incidents.',
+        'Manage Rancher-orchestrated Kubernetes deployments with Jenkins CI/CD, reducing release cycle duration.',
       ],
     ),
 
@@ -140,19 +118,11 @@ class ResumeConstants {
       location: 'Istanbul, Turkey',
       period: 'Aug 2022 – Jul 2025',
       points: [
-        'Architect for Allianz: Led enterprise system transformation from legacy Oracle ADF to Spring Boot 3.x, significantly improving performance, maintainability, and scalability.',
-        'Designed and implemented the Allianz Architectural Framework — a scalable, reusable enterprise architecture blueprint adopted across multiple teams.',
-        'Built OpenAI-powered HR chatbot for Pegasus Airlines with intelligent Redis caching, minute-based rate limiting, and token-efficient prompt design to minimize API costs.',
-        'Delivered chatbot backend integration using Java 17, Spring Boot 3.x, Kafka, and RESTful APIs for seamless HR system interoperability.',
-        'Developed and optimized microservices using Angular and Spring Boot across multiple client engagements.',
-        'Oversaw PostgreSQL and MongoDB implementations ensuring high data reliability and operational efficiency.',
+        "Architect of record for Allianz's core system transformation from legacy Oracle ADF to Spring Boot 3.x, improving performance, maintainability, and scalability.",
+        'Designed the Allianz Architectural Framework — a reusable enterprise architecture blueprint adopted across multiple teams as the standard development pattern.',
+        'Built an OpenAI-powered HR chatbot for Pegasus Airlines: Spring Boot microservices with Redis-based intelligent caching, rate limiting, and token-cost optimization for production LLM usage.',
+        'Delivered microservices across multiple client engagements (Java 17, Spring Boot, Kafka, Angular); oversaw PostgreSQL and MongoDB implementations.',
         'Introduced CI/CD practices with Jenkins and GitLab pipelines, accelerating delivery cycles across teams.',
-      ],
-      notableProjects: [
-        'Oracle ADF → Spring Boot Transformation (Allianz): Modernized Allianz\'s core insurance systems, eliminating legacy Oracle ADF dependencies and significantly improving agility.',
-        'Allianz Architectural Framework: Designed a scalable enterprise architecture blueprint that standardized development patterns across the Allianz engagement.',
-        'Pegasus Airlines HR Chatbot: Integrated OpenAI APIs into HR workflows with Redis-based caching, rate limit management, and Spring Boot microservices for cost-effective AI-driven employee support.',
-        'cplace (Collaboration Factory AG, Germany): Contributed to a project and collaboration management platform for ZF Hungary.',
       ],
     ),
 
@@ -162,14 +132,9 @@ class ResumeConstants {
       location: 'Istanbul, Turkey',
       period: 'Mar 2021 – Aug 2022',
       points: [
-        'Analyzed and re-architected the Harmoni insurance framework (Java 6, JSP, Oracle) into modular components, preparing for microservices migration.',
-        'Migrated backend to Java 8 with Spring Boot, replaced JSP with React for modern frontends, and optimized Oracle DB performance.',
-        'Transformed legacy monolithic Java applications into microservices-based solutions, improving scalability and maintainability.',
-        'Collaborated in Agile development cycles: sprint planning, code reviews, and continuous integration processes.',
-      ],
-      notableProjects: [
-        'Legacy Assessment & Modernization: Analyzed Harmoni insurance framework (Java 6/JSP/Oracle) and re-architected into modular microservice-ready components.',
-        'Technology Uplift & Delivery: Migrated backend to Java 8 + Spring Boot, replaced JSP with React, optimized Oracle DB, and enabled Agile delivery with CI/CD pipelines.',
+        "Re-architected the Harmoni insurance framework (Java 6/JSP/Oracle) at one of Turkey's largest banks into modular, microservice-ready components.",
+        'Migrated the backend to Java 8 + Spring Boot, replaced JSP frontends with React, and tuned Oracle database performance in a regulated financial environment.',
+        'Worked in Agile delivery cycles with code reviews and continuous integration.',
       ],
     ),
 
@@ -179,59 +144,20 @@ class ResumeConstants {
       location: 'Istanbul, Turkey',
       period: 'Jan 2018 – Mar 2021',
       points: [
-        'Led development of retail-focused applications using Java, XML, and Spring Framework.',
-        'Managed global project implementations across France, Morocco, India, Singapore, and Korea.',
-        'Directed technology stack migrations including upgrades to Java 11 and PostgreSQL, improving system reliability.',
-      ],
-      notableProjects: [
-        'CHEC: Self-checkout application enabling seamless retail customer experiences.',
-        'REMS: Retail monitoring system for real-time self-checkout tracking.',
+        'Led a development team delivering retail self-checkout (CHEC) and real-time monitoring (REMS) applications on Java and Spring.',
+        'Managed implementations for global clients across France, Morocco, India, Singapore, and Korea, coordinating with distributed teams.',
+        'Directed technology migrations including Java 11 and PostgreSQL upgrades, improving reliability.',
       ],
     ),
 
     Experience(
-      title: 'Smartiks',
-      role: 'Software Developer',
+      title: 'Smartiks & BAYPM',
+      role: 'Software Developer — Earlier Roles',
       location: 'Istanbul, Turkey',
-      period: 'Mar 2017 – Jan 2018',
+      period: 'Sep 2015 – Jan 2018',
       points: [
-        'Contributed to TÜBİTAK\'s Smartcast Forecasting Project by developing Python-based forecasting libraries leveraging Big Data.',
-        'Optimized databases with MS SQL and Elasticsearch to boost performance and scalability.',
-      ],
-      notableProjects: [
-        'Smartcast Forecasting Project: TÜBİTAK-supported initiative using Big Data and Python forecasting libraries for precise prediction models.',
-        'CMS for Derimod and Yurtiçi Kargo: Enhanced content management solutions streamlining content operations.',
-      ],
-    ),
-
-    Experience(
-      title: 'BAYPM',
-      role: 'Software Developer',
-      location: 'Istanbul, Turkey',
-      period: 'Sep 2015 – Mar 2017',
-      points: [
-        'Certified OutSystems Developer: Delivered internal business applications using OutSystems for rapid development.',
-        'Developed Canvas applications powered by Java Core and T-SQL for enterprise workflows.',
-        'Delivered solutions across transportation and supplier management domains.',
-      ],
-      notableProjects: [
-        'eContractHub: E-contract management system using OutSystems, Java Core, and T-SQL to digitize legal processes.',
-        'Supplier Management Portal: Collaboration platform integrating Spring MVC and OutSystems for supplier workflow management.',
-      ],
-    ),
-
-    Experience(
-      title: 'KARDEMİR A.Ş.',
-      role: 'Software Engineering Intern',
-      location: 'Karabük, Turkey',
-      period: 'Jun 2014 – Sep 2014',
-      points: [
-        'Developed C# and .NET applications within an industrial environment for Turkey\'s largest iron and steel facility.',
-        'Worked with MS SQL to support large-scale operational data flows.',
-      ],
-      notableProjects: [
-        'Transaction Pipeline Simulation: Virtual simulation model optimizing cash transaction handling and workflow accuracy.',
-        'Prototype Production Workflow Tool: C#/.NET prototype integrated with MS SQL to support shop-floor production processes.',
+        'Developed Python forecasting libraries for a TÜBİTAK-supported Big Data project; optimized MS SQL and Elasticsearch workloads (Smartiks).',
+        'Delivered enterprise workflow applications (e-contract management, supplier portals) on Java and low-code platforms (BAYPM).',
       ],
     ),
   ];
@@ -264,7 +190,7 @@ class ResumeConstants {
   // FIX: TOEFL score added — 115/120 is excellent and directly answers
   // the English proficiency question European employers have for non-EU candidates.
   static const String languages =
-      'Turkish (Native), English (Fluent — Proficiency 80/100)';
+      'Turkish (Native), English (Fluent — Maltepe University Proficiency Exam 80/100)';
 
   // =========================
   // Certifications
@@ -320,7 +246,7 @@ class ResumeConstants {
       'writingLevel': 0.90,
       'speakingLevel': 0.85,
       'listeningLevel': 0.95,
-      'certification': 'Proficiency 80/100',
+      'certification': 'Maltepe University Proficiency Exam 80/100',
     },
     {
       'language': 'Turkish',

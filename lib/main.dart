@@ -225,13 +225,15 @@ class _ResumePageState extends State<ResumePage>
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Hero landing block
+            // Hero landing block. Social icons only on small screens —
+            // the desktop side nav already shows them.
             HeroSection(
               onDownloadCv: () => PdfConfig.exportResumePdf(context),
               onOpenChat: () {
                 if (!_chatOpen) _toggleChat();
               },
               onViewProjects: () => _scrollToSection('online_presence'),
+              showSocialIcons: !isLargeScreen,
             ),
 
             // About section — data from ResumeConstants
