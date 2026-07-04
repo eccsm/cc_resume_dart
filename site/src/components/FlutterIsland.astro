@@ -1,0 +1,237 @@
+---
+import fs from 'node:fs';
+import path from 'node:path';
+
+// Manifest written by the root scripts/build.mjs after the Flutter build.
+// Absent in site-only builds — then no overlay markup, no script, and every
+// [data-launch-interactive] trigger stays hidden. Zero Flutter bytes load
+// before the user clicks a launch button.
+let flutterBase: string | null = null;
+const manifestPath = path.resolve('src/generated/flutter-build.json');
+if (fs.existsSync(manifestPath)) {
+  flutterBase = JSON.parse(fs.readFileSync(manifestPath, 'utf8')).base as string;
+}
+---
+
+{
+  flutterBase && (
+    <div
+      id="flutter-overlay"
+      data-base={flutterBase}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Interactive resume"
+      hidden
+    >
+      <div class="bar">
+        <span class="bar-title">Interactive mode</span>
+        <button id="flutter-close" type="button" aria-label="Close interactive mode">
+          ×
+        </button>
+      </div>
+      <div id="flutter-progress" role="status">
+        <div class="spinner" aria-hidden="true" />
+        <p>Booting the Flutter engine…</p>
+      </div>
+      <div id="flutter-host" />
+    </div>
+  )
+}
+
+<script>
+  // Runs on every page; does nothing unless the overlay was rendered (i.e.
+  // the Flutter island was built into this deployment).
+  const overlay = document.getElementById('flutter-overlay');
+  if (overlay) initIsland(overlay);
+
+  interface IslandApi {
+    addView(hostElement: HTMLElement): Promise<number>;
+    removeView(viewId: number): Promise<unknown>;
+  }
+
+  function initIsland(overlay: HTMLElement) {
+    const base = overlay.dataset.base!;
+    const host = document.getElementById('flutter-host')!;
+    const progress = document.getElementById('flutter-progress')!;
+    const progressText = progress.querySelector('p')!;
+    const closeBtn = document.getElementById('flutter-close')!;
+    const island = () => (window as any)._flutterIsland as IslandApi | undefined;
+
+    let viewId: number | null = null;
+    let bootstrapLoading: Promise<void> | null = null;
+
+    // The island exists — reveal every launch trigger (hidden by default so
+    // site-only builds show nothing).
+    document
+      .querySelectorAll<HTMLElement>('[data-launch-interactive]')
+      .forEach((el) => {
+        el.hidden = false;
+        el.closest<HTMLElement>('.interactive-cta')?.removeAttribute('hidden');
+        el.addEventListener('click', (e) => {
+          e.preventDefault();
+          void launch();
+        });
+      });
+
+    function loadBootstrap(): Promise<void> {
+      if (island()) return Promise.resolve();
+      if (!bootstrapLoading) {
+        bootstrapLoading = new Promise((resolve, reject) => {
+          const s = document.createElement('script');
+          s.src = `${base}flutter_bootstrap.js`;
+          s.onload = () => resolve();
+          s.onerror = () => {
+            bootstrapLoading = null;
+            reject(new Error('failed to load flutter_bootstrap.js'));
+          };
+          document.head.appendChild(s);
+        });
+      }
+      return bootstrapLoading;
+    }
+
+    async function launch() {
+      if (!overlay.hidden) return;
+      overlay.hidden = false;
+      progress.hidden = false;
+      progressText.textContent = 'Booting the Flutter engine…';
+      document.body.style.overflow = 'hidden';
+      (window as any).umami?.track('interactive_mode_launched');
+
+      try {
+        // Hide the progress indicator once Flutter attaches its view —
+        // observe BEFORE addView; the view may attach before it resolves.
+        const hideWhenAttached = () => {
+          if (host.childElementCount > 0) {
+            progress.hidden = true;
+            observer.disconnect();
+          }
+        };
+        const observer = new MutationObserver(hideWhenAttached);
+        observer.observe(host, { childList: true });
+
+        await loadBootstrap();
+        viewId = await island()!.addView(host);
+        hideWhenAttached();
+      } catch {
+        progressText.textContent =
+          'Could not start interactive mode — the static resume above has everything.';
+      }
+    }
+
+    function close() {
+      const api = island();
+      if (viewId != null && api) {
+        // Properly dispose the Flutter view; the engine stays warm so a
+        // relaunch is instant.
+        void api.removeView(viewId);
+        viewId = null;
+      }
+      overlay.hidden = true;
+      document.body.style.overflow = '';
+    }
+
+    closeBtn.addEventListener('click', close);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !overlay.hidden) close();
+    });
+  }
+</script>
+
+<style>
+  #flutter-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    background: var(--color-bg);
+  }
+
+  #flutter-overlay[hidden] {
+    display: none;
+  }
+
+  .bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-2) var(--space-4);
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-surface);
+  }
+
+  .bar-title {
+    font-family: var(--font-mono);
+    font-size: var(--text-chip);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  #flutter-close {
+    border: 1px solid var(--color-border);
+    background: none;
+    color: var(--color-text);
+    border-radius: var(--radius-chip);
+    width: var(--space-6);
+    height: var(--space-6);
+    font-size: var(--text-h3);
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  #flutter-close:hover,
+  #flutter-close:focus-visible {
+    color: var(--color-accent);
+    border-color: var(--color-accent);
+  }
+
+  #flutter-progress {
+    position: absolute;
+    inset: 0;
+    top: var(--space-7);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-4);
+    color: var(--color-text-muted);
+  }
+
+  #flutter-progress[hidden] {
+    display: none;
+  }
+
+  .spinner {
+    width: var(--space-6);
+    height: var(--space-6);
+    border: 3px solid var(--color-border);
+    border-top-color: var(--color-accent-fill);
+    border-radius: 50%;
+    animation: flutter-spin 0.9s linear infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .spinner {
+      animation-duration: 2s;
+    }
+  }
+
+  @keyframes flutter-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  #flutter-host {
+    flex: 1;
+    min-height: 0;
+  }
+
+  /* Flutter sizes its view to the host element. */
+  #flutter-host :global(flutter-view) {
+    width: 100%;
+    height: 100%;
+  }
+</style>

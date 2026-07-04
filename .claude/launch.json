@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "astro-preview",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["site/scripts/serve-dist.mjs"],
+      "port": 4321
+    }
+  ]
+}

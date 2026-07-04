@@ -1,0 +1,47 @@
+---
+const year = new Date().getFullYear();
+---
+
+<footer>
+  <p>© {year} Ekincan Casim</p>
+  <p>
+    <!-- Revealed by FlutterIsland's script when a Flutter build is present -->
+    <button type="button" class="flutter-link" data-launch-interactive hidden>
+      View the interactive Flutter version
+    </button>
+  </p>
+</footer>
+
+<style>
+  footer {
+    max-width: var(--wide-width);
+    margin: 0 auto;
+    padding: var(--space-6) var(--space-4) var(--space-7);
+    border-top: 1px solid var(--color-border);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: var(--space-2) var(--space-5);
+    color: var(--color-text-muted);
+    font-size: var(--text-small);
+  }
+
+  footer p {
+    margin: 0;
+  }
+
+  .flutter-link {
+    border: none;
+    background: none;
+    padding: 0;
+    font: inherit;
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+    cursor: pointer;
+  }
+
+  .flutter-link:hover {
+    text-decoration-thickness: 2px;
+  }
+</style>

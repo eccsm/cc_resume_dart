@@ -1,0 +1,280 @@
+/* ============================================================
+   Design tokens
+   Accent policy: --color-accent appears ONLY on links, the
+   active nav marker, section icons, the primary button, and
+   hover states. Everything else is neutral. Semantic exception:
+   --color-success / --color-error for chat status states.
+   ============================================================ */
+
+@font-face {
+  font-family: 'Inter';
+  src: url('/fonts/InterVariable.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('/fonts/JetBrainsMono-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* Light theme */
+  --color-bg: #fafaf8;
+  --color-surface: #ffffff;
+  --color-text: #1a1a1a;
+  --color-text-muted: #5a5f6a;
+  --color-border: #e2e2dd;
+  /* Amber, darkened for AA (4.5:1) as text on the light background.
+     Decorative fills (button bg, markers) use --color-accent-fill. */
+  --color-accent: #96610b;
+  --color-accent-fill: #e8a33d;
+  --color-on-accent: #1a1a1a;
+  --color-chip-bg: #efefec;
+  --color-chip-text: #4a4f58;
+  --color-success: #256c43;
+  --color-error: #a53d37;
+
+  /* Typography */
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  --text-body: 1rem;        /* 16px */
+  --text-small: 0.875rem;   /* 14px */
+  --text-chip: 0.75rem;     /* 12px */
+  --text-h3: 1.125rem;      /* 18px */
+  --text-h2: 1.5rem;        /* 24px */
+  --text-hero: clamp(2.5rem, 5.5vw, 3rem); /* 40–48px */
+  --leading: 1.6;
+
+  /* Spacing scale — only these seven values */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  /* Radius */
+  --radius-card: 8px;
+  --radius-chip: 6px;
+
+  --content-width: 46rem;
+  --wide-width: 62rem;
+
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  --color-bg: #0f1115;
+  --color-surface: #171a21;
+  --color-text: #e6e6e6;
+  --color-text-muted: #9aa0aa;
+  --color-border: #262a33;
+  --color-accent: #e8a33d;
+  --color-accent-fill: #e8a33d;
+  --color-on-accent: #14100a;
+  --color-chip-bg: #21252e;
+  --color-chip-text: #b8bdc7;
+  --color-success: #7cba93;
+  --color-error: #e08d84;
+
+  color-scheme: dark;
+}
+
+/* ============================================================
+   Base
+   ============================================================ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  /* Keep anchored headings clear of the sticky nav */
+  scroll-padding-top: var(--space-7);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  line-height: var(--leading);
+  background: var(--color-bg);
+  color: var(--color-text);
+  -webkit-text-size-adjust: 100%;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  line-height: 1.2;
+  text-wrap: balance;
+}
+
+h2 {
+  font-size: var(--text-h2);
+  margin: 0 0 var(--space-5);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* Section icon: the one decorative accent mark per section */
+h2::before {
+  content: '';
+  flex: none;
+  width: var(--space-3);
+  height: var(--space-3);
+  border-radius: 3px;
+  background: var(--color-accent-fill);
+}
+
+h3 {
+  font-size: var(--text-h3);
+  margin: 0;
+}
+
+p {
+  margin: 0 0 var(--space-4);
+}
+
+a {
+  color: var(--color-accent);
+  text-underline-offset: 0.15em;
+}
+
+a:hover {
+  text-decoration-thickness: 2px;
+}
+
+ul {
+  padding-left: var(--space-5);
+}
+
+li {
+  margin-bottom: var(--space-2);
+}
+
+/* ============================================================
+   Layout
+   ============================================================ */
+
+main {
+  display: block;
+}
+
+.section {
+  max-width: var(--wide-width);
+  margin: 0 auto;
+  padding: var(--space-7) var(--space-4);
+}
+
+.section + .section {
+  border-top: 1px solid var(--color-border);
+}
+
+.skip-link {
+  position: absolute;
+  left: -999px;
+  top: 0;
+  z-index: 100;
+  background: var(--color-accent-fill);
+  color: var(--color-on-accent);
+  padding: var(--space-2) var(--space-4);
+  border-radius: 0 0 var(--radius-chip) 0;
+}
+
+.skip-link:focus {
+  left: 0;
+}
+
+/* ============================================================
+   Shared pieces
+   ============================================================ */
+
+.chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: 0;
+  margin: var(--space-3) 0 0;
+  list-style: none;
+}
+
+.chip-list li {
+  margin: 0;
+}
+
+.chip {
+  display: inline-block;
+  background: var(--color-chip-bg);
+  color: var(--color-chip-text);
+  border-radius: var(--radius-chip);
+  padding: var(--space-1) var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-chip);
+}
+
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: var(--space-5);
+}
+
+.muted {
+  color: var(--color-text-muted);
+}
+
+/* Primary button: the only filled-accent control */
+.button-primary {
+  display: inline-block;
+  background: var(--color-accent-fill);
+  color: var(--color-on-accent);
+  border: 1px solid transparent;
+  border-radius: var(--radius-chip);
+  padding: var(--space-2) var(--space-4);
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.button-primary:hover,
+.button-primary:focus-visible {
+  filter: brightness(1.08);
+  text-decoration: underline;
+}
+
+/* Neutral secondary button/link-pill */
+.button-secondary {
+  display: inline-block;
+  background: transparent;
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-chip);
+  padding: var(--space-2) var(--space-4);
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.button-secondary:hover,
+.button-secondary:focus-visible {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}

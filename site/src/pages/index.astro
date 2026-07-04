@@ -1,0 +1,30 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SiteNav from '../components/SiteNav.astro';
+import Hero from '../components/Hero.astro';
+import Experience from '../components/Experience.astro';
+import CaseStudies from '../components/CaseStudies.astro';
+import Skills from '../components/Skills.astro';
+import Education from '../components/Education.astro';
+import Contact from '../components/Contact.astro';
+import FlutterIsland from '../components/FlutterIsland.astro';
+import Footer from '../components/Footer.astro';
+import { profile } from '../data/resume';
+
+const title = `${profile.name} — ${profile.title}`;
+const description = profile.tagline;
+---
+
+<BaseLayout title={title} description={description}>
+  <SiteNav />
+  <main id="main">
+    <Hero />
+    <Experience />
+    <CaseStudies />
+    <Skills />
+    <Education />
+    <Contact />
+  </main>
+  <FlutterIsland />
+  <Footer />
+</BaseLayout>

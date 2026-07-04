@@ -1,0 +1,40 @@
+---
+import { skills } from '../data/resume';
+---
+
+<section id="skills" class="section" aria-labelledby="skills-heading">
+  <h2 id="skills-heading">Skills</h2>
+  <div class="grid">
+    {skills.map(({ category, groups }) => (
+      <div class="card">
+        <h3>{category}</h3>
+        {groups.map((group) => (
+          <div>
+            {groups.length > 1 && <h4>{group.name}</h4>}
+            <ul class="chip-list" aria-label={group.name}>
+              {group.items.map((item) => (
+                <li><span class="chip">{item}</span></li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    ))}
+  </div>
+</section>
+
+<style>
+  .grid {
+    display: grid;
+    gap: var(--space-5);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  }
+
+  h4 {
+    margin: var(--space-4) 0 0;
+    font-size: var(--text-chip);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+</style>

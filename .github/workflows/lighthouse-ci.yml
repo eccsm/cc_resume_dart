@@ -1,0 +1,40 @@
+# Performance regression guard for the Astro shell (initial page load).
+# Budgets (site/lighthouserc.json): performance >= 95, SEO = 100,
+# accessibility >= 95, total JS < 100 KB. Fails the build on regression.
+#
+# The Flutter island under site/public/assets/flutter/ is NOT part of this
+# audit by design: it loads only after a user gesture, and the JS budget
+# (resource-summary:script:size) counts network requests made during page
+# load — assets that are never fetched don't count. This job builds the
+# site WITHOUT the Flutter step, which also asserts the shell never
+# accidentally references engine files at load time.
+name: Lighthouse CI
+on:
+  push:
+    branches: [master]
+    paths: ['site/**', '.github/workflows/lighthouse-ci.yml']
+  pull_request:
+    paths: ['site/**', '.github/workflows/lighthouse-ci.yml']
+
+jobs:
+  lighthouse:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: site
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+      - run: npm ci
+      # Build with production feature flags so the audit measures the real
+      # payload (analytics script included when configured).
+      - run: npm run build
+        env:
+          PUBLIC_UMAMI_SRC: ${{ vars.PUBLIC_UMAMI_SRC }}
+          PUBLIC_UMAMI_WEBSITE_ID: ${{ vars.PUBLIC_UMAMI_WEBSITE_ID }}
+      - run: node scripts/check-contrast.mjs
+      - run: npx --yes @lhci/cli@0.14.x autorun --config=lighthouserc.json
