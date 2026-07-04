@@ -13,11 +13,16 @@ class HeroSection extends StatefulWidget {
   final VoidCallback onOpenChat;
   final VoidCallback onViewProjects;
 
+  /// Social icons live in the side nav on desktop; show them here only when
+  /// the nav is collapsed into a drawer (mobile) to avoid duplication.
+  final bool showSocialIcons;
+
   const HeroSection({
     super.key,
     required this.onDownloadCv,
     required this.onOpenChat,
     required this.onViewProjects,
+    this.showSocialIcons = false,
   });
 
   @override
@@ -166,7 +171,7 @@ class _HeroSectionState extends State<HeroSection> {
             constraints: const BoxConstraints(maxWidth: 640),
             child: Text(
               '10+ years building enterprise platforms in insurance, banking '
-              'and aviation — from Kafka-backed microservices to '
+              'and retail — from Kafka-backed microservices to '
               'OpenAI-powered chatbots.',
               style: GoogleFonts.inter(
                 fontSize: isNarrow ? 14 : 16,
@@ -227,13 +232,13 @@ class _HeroSectionState extends State<HeroSection> {
               ),
             ],
           ),
-          const SizedBox(height: 24),
-
-          // Social row
-          const Align(
-            alignment: Alignment.centerLeft,
-            child: SocialIconsRow(useCircularBackground: true),
-          ),
+          if (widget.showSocialIcons) ...[
+            const SizedBox(height: 24),
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: SocialIconsRow(useCircularBackground: true),
+            ),
+          ],
         ],
       ),
     );

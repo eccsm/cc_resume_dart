@@ -5,50 +5,36 @@ import 'package:printing/printing.dart';
 import 'resume_constants.dart';
 
 class PdfGenerator {
+  // Brand colors shared with the website theme
+  static const PdfColor _accent = PdfColor.fromInt(0xFFE8991A);
+  static const PdfColor _ink = PdfColor.fromInt(0xFF1A1D26);
+  static const PdfColor _muted = PdfColor.fromInt(0xFF555B67);
+
   static Future<Uint8List> generateResumePdf() async {
     final pdf = pw.Document();
 
     // Load fonts
     final font = await PdfGoogleFonts.openSansRegular();
     final boldFont = await PdfGoogleFonts.openSansBold();
+    final italicFont = await PdfGoogleFonts.openSansItalic();
 
     // Define styles
-    final headerNameStyle = pw.TextStyle(font: boldFont, fontSize: 24, color: PdfColors.black);
-    final headerTitleStyle = pw.TextStyle(font: boldFont, fontSize: 16, color: PdfColors.black);
-    final headerContactStyle = pw.TextStyle(font: font, fontSize: 11, color: PdfColors.black);
+    final headerNameStyle = pw.TextStyle(font: boldFont, fontSize: 24, color: _ink);
+    final headerTitleStyle = pw.TextStyle(font: boldFont, fontSize: 14, color: _accent);
+    final headerContactStyle = pw.TextStyle(font: font, fontSize: 10.5, color: _muted);
 
-    final sectionTitleStyle = pw.TextStyle(font: boldFont, fontSize: 14, color: PdfColors.black);
-    final companyNameStyle = pw.TextStyle(font: boldFont, fontSize: 12, color: PdfColors.black);
-    final positionStyle = pw.TextStyle(font: boldFont, fontSize: 12, color: PdfColors.black);
-    final normalStyle = pw.TextStyle(font: font, fontSize: 11, color: PdfColors.black);
-    final locationPeriodStyle = pw.TextStyle(font: font, fontSize: 11, color: PdfColors.black);
+    final sectionTitleStyle = pw.TextStyle(font: boldFont, fontSize: 13, color: _ink, letterSpacing: 0.4);
+    final companyNameStyle = pw.TextStyle(font: boldFont, fontSize: 12, color: _ink);
+    final positionStyle = pw.TextStyle(font: boldFont, fontSize: 12, color: _ink);
+    final normalStyle = pw.TextStyle(font: font, fontSize: 10.5, color: _ink, lineSpacing: 1.5);
+    final locationPeriodStyle = pw.TextStyle(font: italicFont, fontSize: 10, color: _muted);
 
+    // ATS notes: single-column flow, standard section headings, no repeated
+    // page headers/footers (stray text confuses parsers), ASCII punctuation.
     pdf.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.all(40),
-        header: (context) {
-          // No header on page 1 to avoid duplication with hero header
-          if (context.pageNumber == 1) return pw.SizedBox();
-          return pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.center,
-            children: [
-              pw.Text(ResumeConstants.name, style: headerNameStyle.copyWith(fontSize: 18)),
-              pw.SizedBox(height: 2),
-              pw.Text(ResumeConstants.title, style: headerTitleStyle.copyWith(fontSize: 12)),
-              pw.SizedBox(height: 8),
-              pw.Divider(thickness: 1, color: PdfColors.grey500),
-            ],
-          );
-        },
-        footer: (context) => pw.Row(
-          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-          children: [
-            pw.Text('Ekincan Casim – Resume', style: normalStyle.copyWith(color: PdfColors.grey700)),
-            pw.Text('Page ${context.pageNumber} of ${context.pagesCount}',
-                style: normalStyle.copyWith(color: PdfColors.grey700)),
-          ],
-        ),
         build: (context) => [
           // Hero header (page 1)
           _buildHeader(headerNameStyle, headerTitleStyle, headerContactStyle),
@@ -57,6 +43,12 @@ class PdfGenerator {
           // Professional Summary
           _sectionHeader('Professional Summary', sectionTitleStyle),
           _buildSummary(normalStyle),
+          _divider(),
+
+          // Core Skills (before experience — recruiters and ATS scanners
+          // both read keywords first)
+          _sectionHeader('Core Skills', sectionTitleStyle),
+          _buildCoreSkills(normalStyle, boldFont),
           _divider(),
 
           // Work Experience
@@ -75,44 +67,20 @@ class PdfGenerator {
               )),
           _divider(),
 
-          // Core Skills 
-          _sectionHeader('Core Skills', sectionTitleStyle),
-          _buildCoreSkills(normalStyle, boldFont),
-          _divider(),
-
           // Education
           _sectionHeader('Education', sectionTitleStyle),
           _buildEducation(normalStyle, boldFont),
           _divider(),
 
-          // Languages & Certificates
-          _sectionHeader('Languages & Certificates', sectionTitleStyle),
-          pw.Row(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Expanded(
-                child: pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    pw.Text('Languages', style: companyNameStyle),
-                    _vSpace(4),
-                    pw.Text(ResumeConstants.languages, style: normalStyle),
-                  ],
-                ),
-              ),
-              pw.SizedBox(width: 32),
-              pw.Expanded(
-                child: pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    pw.Text('Certificates', style: companyNameStyle),
-                    _vSpace(4),
-                    _buildCertificatesOneLine(normalStyle),
-                  ],
-                ),
-              ),
-            ],
-          ),
+          // Certifications (own single-column section — ATS parsers mangle
+          // side-by-side columns)
+          _sectionHeader('Certifications', sectionTitleStyle),
+          _buildCertificatesOneLine(normalStyle),
+          _divider(),
+
+          // Languages
+          _sectionHeader('Languages', sectionTitleStyle),
+          pw.Text(_ats(ResumeConstants.languages), style: normalStyle),
         ],
       ),
     );
@@ -120,12 +88,33 @@ class PdfGenerator {
     return pdf.save();
   }
 
-  // ---------- Helpers ----------
-  static pw.Widget _sectionHeader(String title, pw.TextStyle style) =>
-      pw.Padding(padding: const pw.EdgeInsets.only(bottom: 6), child: pw.Text(title, style: style));
+  /// Normalizes typographic punctuation to ASCII so older ATS text
+  /// extractors never trip on it.
+  static String _ats(String s) => s
+      .replaceAll('–', '-') // en dash
+      .replaceAll('—', '-') // em dash
+      .replaceAll('→', '->') // arrow
+      .replaceAll('’', "'")
+      .replaceAll('“', '"')
+      .replaceAll('”', '"');
 
-  static pw.Widget _divider() =>
-      pw.Padding(padding: const pw.EdgeInsets.symmetric(vertical: 10), child: pw.Divider(thickness: 1, color: PdfColors.grey500));
+  // ---------- Helpers ----------
+  /// Section title with a short amber accent bar underneath.
+  static pw.Widget _sectionHeader(String title, pw.TextStyle style) => pw.Padding(
+        padding: const pw.EdgeInsets.only(bottom: 8),
+        child: pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Text(title.toUpperCase(), style: style),
+            pw.SizedBox(height: 3),
+            pw.Container(width: 36, height: 2.2, color: _accent),
+          ],
+        ),
+      );
+
+  static pw.Widget _divider() => pw.Padding(
+      padding: const pw.EdgeInsets.symmetric(vertical: 9),
+      child: pw.Divider(thickness: 0.6, color: PdfColors.grey400));
 
   static pw.SizedBox _vSpace(double h) => pw.SizedBox(height: h);
 
@@ -164,7 +153,7 @@ class PdfGenerator {
       children: entries
           .map((e) => pw.Padding(
                 padding: const pw.EdgeInsets.only(bottom: 3),
-                child: pw.Text('• $e', style: style),
+                child: pw.Text('• ${_ats(e)}', style: style),
               ))
           .toList(),
     );
@@ -237,7 +226,7 @@ class PdfGenerator {
 
   // ---------- Summary ----------
   static pw.Widget _buildSummary(pw.TextStyle style) {
-    return pw.Text(ResumeConstants.profileIntro, style: style);
+    return pw.Text(_ats(ResumeConstants.profileIntro), style: style);
   }
 
   // ---------- Experience (fallback pagination strategy) ----------
@@ -253,9 +242,6 @@ class PdfGenerator {
     required pw.TextStyle locationStyle,
     required pw.TextStyle bodyStyle,
   }) {
-    final normalizedPeriod = period.replaceAll('–', 'to').replaceAll('—', 'to');
-    final headerLineText = '$position | $company | ${_extractLocation(location)} | $normalizedPeriod';
-
     // Build responsibility bullets once
     List<pw.Widget> buildRespBullets(List<String> items) => items
         .map((point) => pw.Padding(
@@ -263,15 +249,20 @@ class PdfGenerator {
               child: pw.Row(
                 crossAxisAlignment: pw.CrossAxisAlignment.start,
                 children: [
-                  pw.Text('•  ', style: bodyStyle),
-                  pw.Expanded(child: pw.Text(point, style: bodyStyle)),
+                  pw.Text('•  ', style: bodyStyle.copyWith(color: _accent)),
+                  pw.Expanded(child: pw.Text(_ats(point), style: bodyStyle)),
                 ],
               ),
             ))
         .toList();
 
+    // "Role - Company" on the first line, "Location | Period" beneath it,
+    // matching the markdown resume layout (ASCII separators for ATS).
     final blocks = <pw.Widget>[
-      pw.Text(headerLineText, style: positionStyle),
+      pw.Text(_ats('$position - $company'), style: positionStyle),
+      _vSpace(2),
+      pw.Text(_ats('${_extractLocation(location)} | $period'),
+          style: locationStyle),
       _vSpace(6),
     ];
 
@@ -340,63 +331,35 @@ class PdfGenerator {
   }
 
   // ---------- Core Skills ----------
+  /// Renders every category from ResumeConstants.skills as
+  /// "**Category:** item, item, item" — the same structure the website uses.
   static pw.Widget _buildCoreSkills(pw.TextStyle style, pw.Font boldFont) {
-    final Map<String, List<String>> simplifiedSkills = {
-      'Programming Languages': _extractSkillList(['Programming Languages']),
-      'Frameworks & Libraries': _extractSkillList(['Frontend Technologies', 'Backend Technologies']),
-      'Database Technologies': _extractSkillList(['Databases']),
-      'DevOps & Cloud': _extractSkillList(['Cloud & DevOps']),
-      'Version Control & Collaboration': _extractSkillList(['Version Control & Collaboration']),
-      'Testing & Quality Assurance': _extractSkillList(['Testing & Quality Assurance']),
-    };
+    final skillSections = ResumeConstants.skills.entries.map((entry) {
+      final items =
+          entry.value.values.expand((skills) => skills).join(', ');
+      if (items.isEmpty) return pw.SizedBox();
 
-    final List<pw.Widget> skillSections = simplifiedSkills.entries.map((entry) {
-    final category = entry.key;
-    final skills = entry.value;
-
-    if (skills.isEmpty) return pw.SizedBox();
-
-    return pw.Padding(
-      padding: const pw.EdgeInsets.only(bottom: 4),
-      child: pw.Row(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          pw.Container(
-            width: 150, 
-            child: pw.Text(
-              category,
-              style: style.copyWith(
-                fontWeight: pw.FontWeight.bold,
+      return pw.Padding(
+        padding: const pw.EdgeInsets.only(bottom: 4),
+        child: pw.Row(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Container(
+              width: 165,
+              child: pw.Text(
+                '${entry.key}:',
+                style: style.copyWith(fontWeight: pw.FontWeight.bold),
               ),
             ),
-          ),
-          // Skills list
-          pw.Expanded(
-            child: pw.Text(
-              skills.join(', '),
-              style: style,
-            ),
-          ),
-        ],
-      ),
-    );
-  }).toList();
+            pw.Expanded(child: pw.Text(_ats(items), style: style)),
+          ],
+        ),
+      );
+    }).toList();
 
-  return pw.Column(
-    crossAxisAlignment: pw.CrossAxisAlignment.start, children: skillSections);
-  }
-
-  static List<String> _extractSkillList(List<String> categories) {
-    final result = <String>[];
-    for (final category in categories) {
-      if (ResumeConstants.skills.containsKey(category)) {
-        final subcategories = ResumeConstants.skills[category]!;
-        for (final subEntry in subcategories.entries) {
-          result.addAll(subEntry.value);
-        }
-      }
-    }
-    return result;
+    return pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: skillSections);
   }
 
   // ---------- Education ----------
@@ -421,7 +384,6 @@ class PdfGenerator {
         period = universityLine.substring(pipeIdx + 3).trim();
         universityLine = universityLine.substring(0, pipeIdx).trim();
       }
-      period = period.replaceAll('–', 'to').replaceAll('—', 'to');
 
       if (degreeLine.isNotEmpty) {
         // normalize common verbose phrasing a bit (optional)
@@ -434,15 +396,16 @@ class PdfGenerator {
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
             pw.Expanded(
-              child: pw.Text(universityLine, style: style.copyWith(fontWeight: pw.FontWeight.bold)),
+              child: pw.Text(_ats(universityLine),
+                  style: style.copyWith(fontWeight: pw.FontWeight.bold)),
             ),
-            if (period.isNotEmpty) pw.Text(period, style: style),
+            if (period.isNotEmpty) pw.Text(_ats(period), style: style),
           ],
         ),
       );
 
       if (degreeLine.isNotEmpty) {
-        widgets.add(pw.Text(degreeLine, style: style));
+        widgets.add(pw.Text(_ats(degreeLine), style: style));
       }
       widgets.add(pw.SizedBox(height: 6));
     }
