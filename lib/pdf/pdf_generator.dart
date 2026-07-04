@@ -215,16 +215,20 @@ class PdfGenerator {
         ),
         pw.SizedBox(height: 2),
 
-        // Location | Phone
+        // Location | Phone (phone only when injected via --dart-define)
         pw.Row(
           mainAxisAlignment: pw.MainAxisAlignment.center,
           children: [
             pw.Text(ResumeConstants.location, style: contactStyle),
-            sep(),
-            pw.UrlLink(
-              destination: 'tel:${ResumeConstants.contactPhone.replaceAll(' ', '')}',
-              child: pw.Text(ResumeConstants.contactPhone, style: contactStyle),
-            ),
+            if (ResumeConstants.contactPhone.isNotEmpty) ...[
+              sep(),
+              pw.UrlLink(
+                destination:
+                    'tel:${ResumeConstants.contactPhone.replaceAll(' ', '')}',
+                child:
+                    pw.Text(ResumeConstants.contactPhone, style: contactStyle),
+              ),
+            ],
           ],
         ),
       ],
