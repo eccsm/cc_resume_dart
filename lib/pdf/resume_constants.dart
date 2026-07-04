@@ -120,7 +120,7 @@ class ResumeConstants {
       points: [
         "Architect of record for Allianz's core system transformation from legacy Oracle ADF to Spring Boot 3.x, improving performance, maintainability, and scalability.",
         'Designed the Allianz Architectural Framework — a reusable enterprise architecture blueprint adopted across multiple teams as the standard development pattern.',
-        'Built an OpenAI-powered HR chatbot for Pegasus Airlines: Spring Boot microservices with Redis-based intelligent caching, rate limiting, and token-cost optimization for production LLM usage.',
+        'Built an GenAI-powered HR chatbot for Pegasus Airlines: Spring Boot microservices with Redis-based intelligent caching, rate limiting, and token-cost optimization for production LLM usage.',
         'Delivered microservices across multiple client engagements (Java 17, Spring Boot, Kafka, Angular); oversaw PostgreSQL and MongoDB implementations.',
         'Introduced CI/CD practices with Jenkins and GitLab pipelines, accelerating delivery cycles across teams.',
       ],
