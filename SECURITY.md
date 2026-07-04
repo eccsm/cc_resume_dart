@@ -2,58 +2,35 @@
 
 ## Reporting a Vulnerability
 
-If you discover a security vulnerability within this project, please send an email to me. All security vulnerabilities will be promptly addressed.
+If you discover a security vulnerability within this project, please send an
+email to the address listed on the resume site. All security vulnerabilities
+will be promptly addressed.
 
-## Credential Exposure in Git History
+## Git History
 
-> ⚠️ **CRITICAL SECURITY ALERT**
->
-> Firebase API keys and configuration were accidentally committed to this repository in previous commits in the following files:
->
-> - `lib/firebase_options.dart`
-> - `android/app/google-services.json`
->
-> These files have now been added to `.gitignore`, but **the sensitive data remains in the Git history**.
+On 2026-07-04 the repository history was rewritten with
+[git filter-repo](https://github.com/newren/git-filter-repo) to remove
+previously committed sensitive content (Firebase configuration files,
+`google-services.json`, `.env`, and personal contact details). A full-history
+scan for common credential patterns comes back clean.
 
-### Required Actions
+Notes:
 
-If you are the owner of this repository or have forked it:
+- Anyone holding an old clone or fork should re-clone; old clones contain the
+  pre-rewrite history.
+- The Firebase **web** API key that appeared in old history is a client-side
+  identifier (shipped to every visitor by design), but it is restricted to the
+  project's authorized domains as a precaution.
 
-1. **Rotate All Firebase API Keys Immediately**:
-   - Visit the [Firebase Console](https://console.firebase.google.com/)
-   - Go to Project Settings > Service accounts
-   - Click "Manage API Keys" to rotate them
-   - Update all local configuration files with the new keys
+## Current Practices
 
-2. **Clean Git History**:
-   - Use [BFG Repo-Cleaner](https://rtyley.github.io/bfg-repo-cleaner/) or `git filter-branch` to remove the sensitive files from your Git history
-   - Example BFG command:
-     ```
-     bfg --delete-files firebase_options.dart --delete-files google-services.json
-     ```
-   - Follow up with:
-     ```
-     git reflog expire --expire=now --all && git gc --prune=now --aggressive
-     ```
-   - Force-push to overwrite the GitHub repository:
-     ```
-     git push --force
-     ```
-
-3. **Replace with Example Files**:
-   - Use the provided example files (`*.example`) as templates
-   - Create your own configuration files locally without committing them
-
-## Best Practices for Credential Management
-
-- Never commit sensitive API keys, tokens, or credentials to version control
-- Use environment variables or secure secret management solutions
-- Add sensitive files to `.gitignore` before initial commit
-- Consider using pre-commit hooks to prevent accidental commits of sensitive files
-- Use placeholders and example files for documentation
-
-## Additional Resources
-
-- [GitHub's guide to removing sensitive data from a repository](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository)
-- [Firebase security best practices](https://firebase.google.com/docs/web/learn-more#secure-your-api-keys)
-- [Git pre-commit hooks](https://pre-commit.com/)
+- No secrets live in this repository. The only private value, the phone
+  number shown in the generated PDF, is injected at build time via
+  `--dart-define=RESUME_PHONE=...` from a GitHub Actions secret and is simply
+  omitted when unset.
+- The deployed site ships a strict `Content-Security-Policy` (no `eval`, no
+  inline scripts), `X-Content-Type-Options: nosniff`, and
+  `Referrer-Policy: strict-origin-when-cross-origin` — see `firebase.json`.
+- `flutter analyze` and `flutter test` gate every deploy in CI.
+- Sensitive file patterns (`.env`, key stores, service accounts) are covered
+  by `.gitignore`.

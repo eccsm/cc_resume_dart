@@ -52,19 +52,11 @@ A Flutter application that presents a digital resume for Ekincan Casim, showcasi
     ```
 3. **Set Up Firebase (Optional):**
 
-    If you want to use Firebase for web hosting and analytics:
+    Firebase is only used for web hosting (see `firebase.json` and
+    `.github/workflows/`). The app itself needs no Firebase configuration
+    or environment files — see [SETUP.md](SETUP.md).
 
-    - Create a Firebase project at [firebase.google.com](https://firebase.google.com/)
-    - Add your app to the Firebase project
-    - Download the configuration files (google-services.json for Android, GoogleService-Info.plist for iOS)
-    - Place the configuration files in the appropriate directories
-    - Ensure Firebase configuration is set up in your app (lib/firebase_options.dart)
-
-4. **Set Up Environment Variables (Optional):**
-
-    Create a .env file in the root directory for any sensitive API keys or configuration.
-
-5. **Run the App:**
+4. **Run the App:**
 
     Use the following command to run the app on your connected device or emulator:
 
@@ -82,13 +74,13 @@ cc_resume_app/
 │   ├── images/         # Images and icons
 │   └── fonts/          # Custom fonts
 ├── lib/
-│   ├── firebase_options.dart   # Firebase configuration
-│   ├── resume_constants.dart   # Resume content
 │   ├── main.dart              # App entry point
-│   ├── pdf/                   # PDF generation logic
-│   └── widgets/               # Custom widgets (e.g., ChatWidget, TypingIndicator)
+│   ├── data/                  # Chatbot knowledge (built from resume constants)
+│   ├── pdf/                   # PDF generation + resume content (resume_constants.dart)
+│   ├── service/               # WebLLM chat service (web/mobile implementations)
+│   ├── theme/                 # Design system
+│   └── widgets/               # UI widgets (hero, chat, bento repo grid, ...)
 ├── test/               # Unit and widget tests
-├── .env                # Environment variables (excluded from Git)
 ├── pubspec.yaml        # Dependency and asset configuration
 └── README.md           # This file
 ```

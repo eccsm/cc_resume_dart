@@ -1,6 +1,0 @@
-{
-  "model_id": "Llama-3-8B-Instruct-q4f32_1-MLC",
-  "model_path": "https://huggingface.co/mlc-ai/mlc-chat-Llama-3-8B-Instruct-q4f32_1-MLC/resolve/main/params/",
-  "fallback_path": "https://storage.googleapis.com/mlc-models/mlc-chat-Llama-3-8B-Instruct-q4f32_1-MLC/",
-  "local_path": false
-}

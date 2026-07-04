@@ -127,6 +127,16 @@ class _HeroSectionState extends State<HeroSection> {
             height: isNarrow ? 28 : 34,
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 450),
+              // Keep both outgoing and incoming text anchored to the left;
+              // the default layoutBuilder centers them, which made shorter
+              // roles appear centered and then jump left after the switch.
+              layoutBuilder: (currentChild, previousChildren) => Stack(
+                alignment: Alignment.centerLeft,
+                children: [
+                  ...previousChildren,
+                  if (currentChild != null) currentChild,
+                ],
+              ),
               transitionBuilder: (child, animation) => FadeTransition(
                 opacity: animation,
                 child: SlideTransition(
