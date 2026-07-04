@@ -1,79 +1,74 @@
-// lib/widgets/theme_toggle_widget.dart
-
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../theme/app_theme.dart';
+import '../theme/theme_provider.dart';
 
+/// Premium theme toggle with smooth sun/moon icon morph
 class ThemeToggleWidget extends StatefulWidget {
-  final Function(ThemeMode) onThemeChanged;
-  final ThemeMode currentTheme;
+  final bool isCompact;
+  final bool showLabel;
 
   const ThemeToggleWidget({
     super.key,
-    required this.onThemeChanged,
-    required this.currentTheme,
+    this.isCompact = false,
+    this.showLabel = true,
   });
 
   @override
   State<ThemeToggleWidget> createState() => _ThemeToggleWidgetState();
 }
 
-class _ThemeToggleWidgetState extends State<ThemeToggleWidget> with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
-  late Animation<double> _rotationAnimation;
-  
+class _ThemeToggleWidgetState extends State<ThemeToggleWidget>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+  bool _isInitialized = false;
+
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
+    _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 400),
     );
-    
-    _rotationAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeInOut,
-      ),
+    _animation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeInOutCubic,
     );
-    
-    // Set initial animation state based on current theme
-    if (widget.currentTheme == ThemeMode.dark) {
-      _animationController.value = 1.0;
-    } else {
-      _animationController.value = 0.0;
-    }
   }
 
   @override
-  void didUpdateWidget(ThemeToggleWidget oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    // Update animation value when theme changes externally
-    if (widget.currentTheme != oldWidget.currentTheme) {
-      if (widget.currentTheme == ThemeMode.dark) {
-        _animationController.value = 1.0;
-      } else {
-        _animationController.value = 0.0;
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_isInitialized) {
+      try {
+        final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+        _controller.value = themeProvider.themeMode == ThemeMode.dark ? 1.0 : 0.0;
+        _isInitialized = true;
+      } catch (e) {
+        debugPrint('Failed to initialize theme: $e');
       }
     }
   }
 
   @override
   void dispose() {
-    _animationController.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
   void _toggleTheme() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    
-    if (isDark) {
-      widget.onThemeChanged(ThemeMode.light);
-      _animationController.reverse();
-    } else {
-      widget.onThemeChanged(ThemeMode.dark);
-      _animationController.forward();
+    if (!mounted) return;
+    try {
+      final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+      themeProvider.toggleTheme();
+      if (themeProvider.themeMode == ThemeMode.dark) {
+        _controller.forward();
+      } else {
+        _controller.reverse();
+      }
+    } catch (e) {
+      debugPrint('Failed to toggle theme: $e');
     }
   }
 
@@ -81,13 +76,33 @@ class _ThemeToggleWidgetState extends State<ThemeToggleWidget> with SingleTicker
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final themeText = isDark ? 'Light Mode' : 'Dark Mode';
-    
+
+    if (widget.isCompact) {
+      return IconButton(
+        icon: AnimatedBuilder(
+          animation: _animation,
+          builder: (context, child) {
+            return Transform.rotate(
+              angle: _animation.value * 3.14,
+              child: Icon(
+                isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+                color: isDark ? AppTheme.primaryColor : const Color(0xFF6366F1),
+                size: 22,
+              ),
+            );
+          },
+        ),
+        onPressed: _toggleTheme,
+        tooltip: themeText,
+      );
+    }
+
     return Material(
       color: Colors.transparent,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+        padding: const EdgeInsets.symmetric(horizontal: 8),
         child: AnimatedBuilder(
-          animation: _rotationAnimation,
+          animation: _animation,
           builder: (context, child) {
             return InkWell(
               onTap: _toggleTheme,
@@ -95,21 +110,14 @@ class _ThemeToggleWidgetState extends State<ThemeToggleWidget> with SingleTicker
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
-                  color: isDark 
-                      ? Colors.grey.shade800 
-                      : Colors.grey.shade200,
+                  color: isDark
+                      ? Colors.white.withAlpha(10)
+                      : Colors.black.withAlpha(8),
                   borderRadius: BorderRadius.circular(30),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
                   border: Border.all(
-                    color: isDark 
-                        ? Colors.grey.shade700 
-                        : Colors.grey.shade300,
+                    color: isDark
+                        ? Colors.white.withAlpha(15)
+                        : Colors.black.withAlpha(10),
                     width: 1,
                   ),
                 ),
@@ -117,27 +125,24 @@ class _ThemeToggleWidgetState extends State<ThemeToggleWidget> with SingleTicker
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Transform.rotate(
-                      angle: _rotationAnimation.value * 6.28,
+                      angle: _animation.value * 6.28,
                       child: Icon(
-                        isDark ? Icons.light_mode : Icons.dark_mode,
-                        color: isDark 
-                            ? Colors.amber 
-                            : Colors.indigo,
-                        size: 20,
+                        isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+                        color: isDark ? AppTheme.primaryColor : const Color(0xFF6366F1),
+                        size: 18,
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Text(
-                      themeText,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: isDark 
-                            ? Colors.white 
-                            : Colors.black87,
-                        inherit: true,
+                    if (widget.showLabel) ...[
+                      const SizedBox(width: 8),
+                      Text(
+                        themeText,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: isDark ? Colors.white.withAlpha(200) : Colors.black.withAlpha(180),
+                        ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
               ),
