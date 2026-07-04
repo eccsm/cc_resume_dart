@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "astro-preview",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["--prefix", "site", "run", "preview"],
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["site/scripts/serve-dist.mjs"],
       "port": 4321
     }
   ]

@@ -37,15 +37,25 @@ Cookies on casim.net should list nothing from stats.casim.net.
 |---|---|
 | Page views | Automatic |
 | Section visibility (`section-view`) | IntersectionObserver in `BaseLayout.astro`, fires once per section per visit when scrolled into view |
-| Chat widget opens (`chat-open`) | `data-umami-event` on the floating button |
+| Interactive mode launches (`interactive_mode_launched`) | Fired when the Flutter overlay opens |
 | Outbound LinkedIn / GitHub / Hugging Face (`outbound-*`) | `data-umami-event` on hero + contact links |
 | CV download (`cv-download`) | **Pending** — the Astro site has no CV file yet; when one is added, put `data-umami-event="cv-download"` on the link and it's tracked automatically |
 
-## CSP note for the site host
+## Required headers on stats.casim.net (COEP)
 
-The Flutter-era `firebase.json` ships a strict Content-Security-Policy. When
-the Astro site goes live behind those headers, add:
+casim.net runs **cross-origin isolated** (`Cross-Origin-Embedder-Policy:
+require-corp` — WebLLM in the Flutter island needs it). The tracking script
+tag uses `crossorigin="anonymous"`, so the reverse proxy in front of Umami
+must answer CORS/CORP or the browser refuses to load the script:
 
-- `script-src`: `https://stats.casim.net`
-- `connect-src`: `https://stats.casim.net https://ask.casim.net` (analytics beacon + chat worker)
-- `media-src`: `blob:` (TTS audio playback)
+```
+Access-Control-Allow-Origin: https://casim.net
+Cross-Origin-Resource-Policy: cross-origin
+```
+
+(Caddy: `header Access-Control-Allow-Origin https://casim.net` etc.; nginx:
+`add_header`.) Verify after deploy: the script shows no CORP/CORS error in
+the console and page views appear in the dashboard.
+
+The site's own CSP (`firebase.json` at the repo root) already allowlists
+`https://stats.casim.net` in `script-src` and `connect-src`.

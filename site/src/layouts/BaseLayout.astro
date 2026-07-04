@@ -95,9 +95,13 @@ const jsonLd = {
     <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
 
     {analyticsEnabled && (
+      // crossorigin: the site runs cross-origin isolated (COEP require-corp,
+      // needed by WebLLM in the Flutter island) — the stats host must answer
+      // CORS (see analytics/README.md).
       <script
         is:inline
         defer
+        crossorigin="anonymous"
         src={umamiSrc}
         data-website-id={umamiId}
         data-do-not-track="true"

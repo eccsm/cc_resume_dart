@@ -59,9 +59,13 @@
      */
     _importWebLLM: async function() {
       try {
-        // Try local file first
+        // Try local file first. The base is overridable so the app works both
+        // standalone (assets at /assets/js/) and embedded as an island, where
+        // flutter_bootstrap.js sets window.__webllmBase to the hashed
+        // /assets/flutter/<hash>/assets/js/ directory.
         try {
-          const module = await import('/assets/js/webllm.js');
+          const localBase = window.__webllmBase || '/assets/js/';
+          const module = await import(localBase + 'webllm.js');
           return module;
         } catch (localError) {
           console.warn('[WebLLMHelper] Could not load local WebLLM module:', localError);

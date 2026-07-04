@@ -8,9 +8,8 @@ lazy-loaded "interactive mode" overlay.
 
 | Path | What it is |
 |---|---|
-| [`site/`](site/README.md) | Astro static site — the deployed artifact (`site/dist`). Semantic HTML resume, design tokens, JSON-LD/OG/sitemap, chat widget. |
-| [`flutter_app/`](flutter_app/README.md) | Flutter Web app, built into `site/public/assets/flutter/` and booted on demand as a multi-view island. |
-| [`worker/`](worker/README.md) | Cloudflare Worker: `/ask` (Claude chat), `/tts` (ElevenLabs), `/health`. |
+| [`site/`](site/README.md) | Astro static site — the deployed artifact (`site/dist`). Semantic HTML resume, design tokens, JSON-LD/OG/sitemap. |
+| [`flutter_app/`](flutter_app/README.md) | Flutter Web app, built into `site/public/assets/flutter/` and booted on demand as a multi-view island. Hosts the WebLLM in-browser AI chat (no server, no API keys). |
 | [`analytics/`](analytics/README.md) | Self-hosted Umami (docker-compose) for stats.casim.net. |
 | `scripts/` | Root build pipeline (see below). |
 
@@ -21,8 +20,8 @@ All resume content lives in
 
 - the Astro pages render it directly,
 - `site/scripts/emit-resume-json.mjs` emits `site/public/data/resume.json`
-  (build step), which the Flutter app fetches at runtime,
-- the chat worker's system prompt is generated from it at deploy time.
+  (build step), which the Flutter app fetches at runtime — the WebLLM chat
+  grounds its answers in the same data.
 
 Edit content there and nowhere else. No PII — this repo is public.
 
@@ -42,4 +41,3 @@ For site-only iteration (no Flutter island): `cd site && npm run build`.
 - `.github/workflows/firebase-hosting-pull-request.yml` — PR preview channel.
 - `.github/workflows/lighthouse-ci.yml` — perf/SEO/a11y/JS budgets on the
   static shell (Flutter assets are behind a user gesture and don't count).
-- `.github/workflows/uptime.yml` — chat backend `/health` probe.

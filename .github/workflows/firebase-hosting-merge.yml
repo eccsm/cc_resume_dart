@@ -35,7 +35,6 @@ jobs:
       - run: node scripts/build.mjs
         env:
           RESUME_PHONE: ${{ secrets.RESUME_PHONE }}
-          PUBLIC_CHAT_ENDPOINT: ${{ vars.PUBLIC_CHAT_ENDPOINT || 'https://ask.casim.net' }}
           PUBLIC_UMAMI_SRC: ${{ vars.PUBLIC_UMAMI_SRC }}
           PUBLIC_UMAMI_WEBSITE_ID: ${{ vars.PUBLIC_UMAMI_WEBSITE_ID }}
 
