@@ -333,11 +333,11 @@ class ResumeConstants {
       'endDate': '2025-07-01',
       'icon': 'work',
       'color': '#009688',
-      'tags': ['Java 17', 'Spring Boot', 'OpenAI', 'Redis', 'Kafka', 'Allianz'],
+      'tags': ['Java 17', 'Spring Boot', 'GenAI', 'Redis', 'Kafka', 'Allianz'],
       'achievements': [
         'Led Oracle ADF → Spring Boot 3.x migration for Allianz core systems',
         'Designed Allianz Architectural Framework adopted across multiple teams',
-        'Built Pegasus Airlines HR chatbot with OpenAI APIs and cost-optimized token management',
+        'Built Pegasus Airlines HR chatbot with GenAI APIs and cost-optimized token management',
       ],
     },
     {
