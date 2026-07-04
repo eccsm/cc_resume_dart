@@ -9,5 +9,5 @@
     "noEmit": true,
     "skipLibCheck": true
   },
-  "include": ["src/**/*.ts", "../astro/src/data/resume.ts"]
+  "include": ["src/**/*.ts", "../site/src/data/resume.ts"]
 }

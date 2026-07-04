@@ -14,7 +14,7 @@ docker compose up -d
    password immediately**.
 2. Put a TLS reverse proxy in front (e.g. `stats.casim.net` → port 3000).
 3. Settings → Websites → Add website (`casim.net`) → copy the **Website ID**.
-4. In `astro/.env` set:
+4. In `site/.env` set:
    ```
    PUBLIC_UMAMI_SRC=https://stats.casim.net/script.js
    PUBLIC_UMAMI_WEBSITE_ID=<the id>

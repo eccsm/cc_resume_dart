@@ -5,7 +5,10 @@ const year = new Date().getFullYear();
 <footer>
   <p>© {year} Ekincan Casim</p>
   <p>
-    <a href="https://flutter.casim.net">View the Flutter version</a> of this site
+    <!-- Revealed by FlutterIsland's script when a Flutter build is present -->
+    <button type="button" class="flutter-link" data-launch-interactive hidden>
+      View the interactive Flutter version
+    </button>
   </p>
 </footer>
 
@@ -25,5 +28,20 @@ const year = new Date().getFullYear();
 
   footer p {
     margin: 0;
+  }
+
+  .flutter-link {
+    border: none;
+    background: none;
+    padding: 0;
+    font: inherit;
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+    cursor: pointer;
+  }
+
+  .flutter-link:hover {
+    text-decoration-thickness: 2px;
   }
 </style>

@@ -1,7 +1,8 @@
 # casim.net — Astro resume site
 
-Static single-page resume site replacing the Flutter Web portfolio (which
-moves to <https://flutter.casim.net>, linked in the footer).
+Static single-page resume site — the deployed shell of the monorepo (see the
+[root README](../README.md)). The Flutter app in `../flutter_app` embeds into
+it as the lazy-loaded "interactive mode" overlay.
 
 ## Commands
 
@@ -48,31 +49,13 @@ Lighthouse CI (`lighthouserc.json`, enforced by
 SEO = 100, accessibility >= 95, total JS < 100 KB. Last local run
 (2026-07, chat widget + fonts included): all assertions passing.
 
-## Deploying to Firebase Hosting
+## Deploying
 
-The Astro site is not yet wired into CI. To deploy it instead of the
-Flutter build, point the hosting config at `astro/dist`:
-
-```jsonc
-// firebase.json (repo root)
-"hosting": { "public": "astro/dist", ... }
-```
-
-and replace the Flutter build steps in
-`.github/workflows/firebase-hosting-merge.yml` with:
-
-```yaml
-- uses: actions/setup-node@v4
-  with: { node-version: 20 }
-- run: npm ci
-  working-directory: astro
-- run: npm run build
-  working-directory: astro
-```
-
-The COOP/COEP headers and the SPA rewrite in `firebase.json` exist for the
-Flutter/WASM app; the static Astro site doesn't need them (keep the security
-headers if the domain still serves the Flutter app anywhere).
+CI runs the root pipeline (`node scripts/build.mjs` from the repo root:
+resume.json emit → Flutter island build → `astro build`) and ships
+`site/dist` to Firebase Hosting — see `.github/workflows/`. For site-only
+iteration, `npm run build` here works standalone: the interactive-mode
+button hides itself when no Flutter build manifest is present.
 
 ## Windows dev machine gotcha
 

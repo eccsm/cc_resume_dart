@@ -9,7 +9,7 @@ buttons on casim.net.
 | `POST /tts` | Returns ElevenLabs MP3 audio for an assistant answer; cached forever in R2 by text hash |
 | `GET /health` | Uptime probe, returns `{ok: true}` |
 
-The system prompt is generated from [`../astro/src/data/resume.ts`](../astro/src/data/resume.ts)
+The system prompt is generated from [`../site/src/data/resume.ts`](../site/src/data/resume.ts)
 at deploy time — **redeploy the worker after editing resume content.**
 
 ## First deploy
@@ -34,7 +34,7 @@ npx wrangler secret put IP_HASH_SALT        # any long random string
 npm run deploy
 ```
 
-Then point the site at it: set `PUBLIC_CHAT_ENDPOINT` in `astro/.env`
+Then point the site at it: set `PUBLIC_CHAT_ENDPOINT` in `site/.env`
 (e.g. `https://resume-chat.<account>.workers.dev` or `https://ask.casim.net`
 after attaching the custom domain in the dashboard).
 

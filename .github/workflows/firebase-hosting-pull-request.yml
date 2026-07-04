@@ -6,20 +6,40 @@ permissions:
   pull-requests: write
 jobs:
   build_and_preview:
+    # Preview deploys need repo secrets; skip for forks.
     if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: site/package-lock.json
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.44.4'
           channel: 'stable'
+
+      - run: npm ci
+        working-directory: site
+      # Tests parse the emitted resume.json, so emit before flutter test.
+      - run: node scripts/emit-resume-json.mjs
+        working-directory: site
       - run: flutter pub get
+        working-directory: flutter_app
       - run: flutter analyze
+        working-directory: flutter_app
       - run: flutter test
-      # RESUME_PHONE is optional; when the secret is unset the PDF omits the
-      # phone entry. Resume data itself lives in lib/pdf/resume_constants.dart.
-      - run: flutter build web --release --dart-define=RESUME_PHONE="${{ secrets.RESUME_PHONE }}"
+        working-directory: flutter_app
+
+      # Full pipeline: flutter build web -> copy into site/public -> astro build.
+      - run: node scripts/build.mjs
+        env:
+          PUBLIC_CHAT_ENDPOINT: ${{ vars.PUBLIC_CHAT_ENDPOINT || 'https://ask.casim.net' }}
+          PUBLIC_UMAMI_SRC: ${{ vars.PUBLIC_UMAMI_SRC }}
+          PUBLIC_UMAMI_WEBSITE_ID: ${{ vars.PUBLIC_UMAMI_WEBSITE_ID }}
+
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}

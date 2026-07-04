@@ -10,7 +10,7 @@ import {
   certifications,
   languages,
   contact,
-} from '../../astro/src/data/resume';
+} from '../../site/src/data/resume';
 
 function experienceSection(): string {
   return experiences
