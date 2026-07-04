@@ -1,57 +1,49 @@
-// lib/main.dart
-
-import 'package:cc_resume_app/config/env_config.dart';
 import 'package:cc_resume_app/pdf/resume_constants.dart';
-import 'package:cc_resume_app/widgets/enhanced_chatbot_widget.dart';
-import 'package:cc_resume_app/widgets/draggable_chat_widget.dart';
+import 'package:cc_resume_app/service/webllm_service.dart';
+import 'package:cc_resume_app/theme/app_theme.dart';
+import 'package:cc_resume_app/theme/theme_provider.dart';
 import 'package:cc_resume_app/widgets/navigation_pane.dart';
 import 'package:cc_resume_app/widgets/pinned_git_repos_widget.dart';
 import 'package:cc_resume_app/widgets/timeline_experience_card.dart';
-import 'package:cc_resume_app/widgets/theme_toggle_widget.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import 'package:responsive_framework/responsive_framework.dart';
-import 'config/api_config.dart';
+import 'pdf/pdf_config.dart';
 import 'widgets/badge_gallery_widget.dart';
 import 'widgets/certification_carousel_widget.dart';
 import 'widgets/github_activity_calendar_widget.dart';
-import 'widgets/language_proiciency_widget.dart';
+import 'widgets/hero_section.dart';
+import 'widgets/language_proficiency_widget.dart';
+import 'widgets/reveal_on_scroll.dart';
 import 'widgets/section_card.dart';
 import 'widgets/skills_section.dart';
+import 'widgets/theme_toggle_widget.dart';
+import 'widgets/chat_widget.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await EnvConfig.init();
-  runApp(const ResumeApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => WebLLMService()),
+      ],
+      child: const ResumeApp(),
+    ),
+  );
 }
 
-class ResumeApp extends StatefulWidget {
+class ResumeApp extends StatelessWidget {
   const ResumeApp({super.key});
 
   @override
-  State<ResumeApp> createState() => _ResumeAppState();
-}
-
-class _ResumeAppState extends State<ResumeApp> {
-  ThemeMode _themeMode = ThemeMode.system;
-  
-  void _toggleTheme(ThemeMode themeMode) {
-    setState(() {
-      _themeMode = themeMode;
-    });
-  }
-  
-  @override
   Widget build(BuildContext context) {
-    // Create consistent text themes with inherit=true
-    final lightTextTheme = _createTextTheme(Colors.black87, true);
-    final darkTextTheme = _createTextTheme(Colors.white, true);
-    
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
     return MaterialApp(
-      title: 'Ekincan Casim',
+      title: 'Ekincan Casim — Software Architect',
       debugShowCheckedModeBanner: false,
-      themeMode: _themeMode,
-      
+      themeMode: themeProvider.themeMode,
       builder: (context, widget) => ResponsiveBreakpoints.builder(
         child: widget!,
         breakpoints: const [
@@ -61,127 +53,27 @@ class _ResumeAppState extends State<ResumeApp> {
           Breakpoint(start: 1921, end: double.infinity, name: '4K'),
         ],
       ),
-      
-      // Light theme
-      theme: ThemeData(
-        primaryColor: const Color(0xFFFBAD48),
-        useMaterial3: true,
-        brightness: Brightness.light,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.indigo,
-          brightness: Brightness.light,
-        ),
-        textTheme: lightTextTheme,
-        appBarTheme: AppBarTheme(
-          backgroundColor: Colors.grey.shade900.withOpacity(0.85),
-          elevation: 4,
-          shadowColor: Colors.black.withOpacity(0.5),
-          foregroundColor: Colors.white,
-          titleTextStyle: GoogleFonts.oswald(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-          iconTheme: const IconThemeData(color: Colors.white),
-        ),
-        cardTheme: CardTheme(
-          color: Colors.white,
-          shadowColor: Colors.black.withOpacity(0.2),
-          elevation: 4,
-        ),
-        scaffoldBackgroundColor: Colors.grey.shade50,
-        dividerColor: Colors.grey.shade300,
-        indicatorColor: const Color(0xFFFBAD48),
-      ),
-      
-      // Dark theme
-      darkTheme: ThemeData(
-        primaryColor: const Color(0xFFFBAD48),
-        useMaterial3: true,
-        brightness: Brightness.dark,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.indigo,
-          brightness: Brightness.dark,
-        ),
-        textTheme: darkTextTheme,
-        appBarTheme: AppBarTheme(
-          backgroundColor: Colors.grey.shade900,
-          elevation: 4,
-          shadowColor: Colors.black.withOpacity(0.5),
-          foregroundColor: Colors.white,
-          titleTextStyle: GoogleFonts.oswald(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-          iconTheme: const IconThemeData(color: Colors.white),
-        ),
-        cardTheme: CardTheme(
-          color: Colors.grey.shade900,
-          shadowColor: Colors.black.withOpacity(0.4),
-          elevation: 4,
-        ),
-        scaffoldBackgroundColor: Colors.black87,
-        dividerColor: Colors.grey.shade700,
-        indicatorColor: const Color(0xFFFBAD48),
-      ),
-      
-      home: ResumePage(onThemeChanged: _toggleTheme, currentTheme: _themeMode),
-    );
-  }
-  
-  // Helper method to create consistent text themes
-  TextTheme _createTextTheme(Color textColor, bool inherit) {
-    return GoogleFonts.oswaldTextTheme(
-      TextTheme(
-        displayLarge: TextStyle(color: textColor, inherit: inherit),
-        displayMedium: TextStyle(color: textColor, inherit: inherit),
-        displaySmall: TextStyle(color: textColor, inherit: inherit),
-        headlineLarge: TextStyle(color: textColor, inherit: inherit),
-        headlineMedium: TextStyle(
-          color: textColor, 
-          inherit: inherit, 
-          fontSize: 32, 
-          fontWeight: FontWeight.bold
-        ),
-        headlineSmall: TextStyle(color: textColor, inherit: inherit),
-        titleLarge: TextStyle(color: textColor, inherit: inherit),
-        titleMedium: TextStyle(color: textColor, inherit: inherit),
-        titleSmall: TextStyle(color: textColor, inherit: inherit),
-        bodyLarge: TextStyle(color: textColor, inherit: inherit),
-        bodyMedium: GoogleFonts.openSans(
-          fontSize: 16,
-          color: textColor,
-        ),
-        bodySmall: TextStyle(color: textColor, inherit: inherit),
-        labelLarge: TextStyle(color: textColor, inherit: inherit),
-        labelMedium: TextStyle(color: textColor, inherit: inherit),
-        labelSmall: TextStyle(color: textColor, inherit: inherit),
-      ),
+      theme: AppTheme.lightTheme(),
+      darkTheme: AppTheme.darkTheme(),
+      home: const ResumePage(),
     );
   }
 }
 
 class ResumePage extends StatefulWidget {
-  final Function(ThemeMode) onThemeChanged;
-  final ThemeMode currentTheme;
-  
-  const ResumePage({
-    super.key, 
-    required this.onThemeChanged,
-    required this.currentTheme,
-  });
+  const ResumePage({super.key});
 
   @override
   State<ResumePage> createState() => _ResumePageState();
 }
 
-class _ResumePageState extends State<ResumePage> with TickerProviderStateMixin, WidgetsBindingObserver {
+class _ResumePageState extends State<ResumePage>
+    with TickerProviderStateMixin, WidgetsBindingObserver {
+  // Chat state — no longer initializes WebLLM here
   bool _chatOpen = false;
 
   final Map<String, GlobalKey> _sectionKeys = {
     'professional_summary': GlobalKey(),
-    'skills_overview': GlobalKey(),
     'experience': GlobalKey(),
     'skills': GlobalKey(),
     'certifications': GlobalKey(),
@@ -191,55 +83,48 @@ class _ResumePageState extends State<ResumePage> with TickerProviderStateMixin, 
   };
 
   final ScrollController _scrollController = ScrollController();
-  String _activeSection = 'professional_summary'; 
-  double _chatbotTop = 0;
-  double _chatbotLeft = 0;
-  
-  // Animation controllers
-  late AnimationController _backgroundController;
-  late Animation<double> _backgroundAnimation;
+  String _activeSection = 'professional_summary';
+
+  late AnimationController _bgController;
+  late Animation<double> _bgAnimation;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    
-    // Initialize animation controllers
-    _backgroundController = AnimationController(
-      duration: const Duration(seconds: 30),
+
+    _bgController = AnimationController(
+      duration: const Duration(seconds: 20),
       vsync: this,
     )..repeat(reverse: true);
-    
-    _backgroundAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(_backgroundController);
-    
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final size = MediaQuery.of(context).size;
-      setState(() {
-        _chatbotTop = size.height - 100; 
-        _chatbotLeft = size.width - 100; 
-      });
-    });
+
+    _bgAnimation = CurvedAnimation(
+      parent: _bgController,
+      curve: Curves.easeInOut,
+    );
+
+    // Scroll-spy: highlight the section currently in view in the nav pane.
+    _scrollController.addListener(_updateActiveSectionOnScroll);
   }
 
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    _scrollController.dispose();
-    _backgroundController.dispose();
-    super.dispose();
-  }
-
-  @override
-  void didChangeMetrics() {
-    final size = MediaQuery.of(context).size;
-    setState(() {
-      _chatbotTop = _chatbotTop.clamp(20.0, size.height - 80);
-      _chatbotLeft = _chatbotLeft.clamp(20.0, size.width - 80);
-    });
-    super.didChangeMetrics();
+  void _updateActiveSectionOnScroll() {
+    String current = 'professional_summary';
+    double best = double.negativeInfinity;
+    for (final entry in _sectionKeys.entries) {
+      final ctx = entry.value.currentContext;
+      if (ctx == null) continue;
+      final render = ctx.findRenderObject();
+      if (render is! RenderBox || !render.attached) continue;
+      final top = render.localToGlobal(Offset.zero).dy;
+      // The section whose top edge is closest above the reading line wins.
+      if (top <= 160 && top > best) {
+        best = top;
+        current = entry.key;
+      }
+    }
+    if (current != _activeSection) {
+      setState(() => _activeSection = current);
+    }
   }
 
   void _toggleChat() {
@@ -248,43 +133,70 @@ class _ResumePageState extends State<ResumePage> with TickerProviderStateMixin, 
     });
   }
 
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _scrollController.dispose();
+    _bgController.dispose();
+    super.dispose();
+  }
+
   void _scrollToSection(String section) {
     setState(() {
       _activeSection = section;
     });
     final key = _sectionKeys[section];
     if (key != null) {
-      final context = key.currentContext;
-      if (context != null) {
+      final ctx = key.currentContext;
+      if (ctx != null) {
         Scrollable.ensureVisible(
-          context,
-          duration: const Duration(milliseconds: 500),
-          curve: Curves.easeInOut,
+          ctx,
+          duration: const Duration(milliseconds: 600),
+          curve: Curves.easeOutCubic,
         );
       }
     }
   }
 
-
   Widget _buildAnimatedBackground() {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    
+    final colors = AppTheme.getColors(context);
+
     return AnimatedBuilder(
-      animation: _backgroundAnimation,
+      animation: _bgAnimation,
+      // The static photo is passed as `child` so only the gradient overlay
+      // rebuilds each frame.
+      child: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/images/background.jpg'),
+            fit: BoxFit.cover,
+          ),
+        ),
+      ),
       builder: (context, child) {
-        return Container(
-          decoration: BoxDecoration(
-            image: DecorationImage(
-              image: const AssetImage('assets/images/background.jpg'),
-              fit: BoxFit.cover,
-              colorFilter: ColorFilter.mode(
-                isDarkMode 
-                  ? Colors.black.withOpacity(0.75 + (_backgroundAnimation.value * 0.05))
-                  : Colors.white.withOpacity(0.45 + (_backgroundAnimation.value * 0.05)),
-                isDarkMode ? BlendMode.darken : BlendMode.lighten,
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            child!,
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    colors.gradientStart.withValues(alpha: 0.82),
+                    colors.background.withValues(alpha: 0.88),
+                    colors.gradientEnd.withValues(alpha: 0.82),
+                  ],
+                  stops: [
+                    0.0,
+                    0.4 + (_bgAnimation.value * 0.2),
+                    1.0,
+                  ],
+                ),
               ),
             ),
-          ),
+          ],
         );
       },
     );
@@ -292,148 +204,170 @@ class _ResumePageState extends State<ResumePage> with TickerProviderStateMixin, 
 
   Widget _buildResumeContent() {
     bool isLargeScreen = ResponsiveBreakpoints.of(context).largerThan(TABLET);
-    const accentColor = Color(0xFFFBAD48);
-    
+    final colors = AppTheme.getColors(context);
+    const accentColor = AppTheme.primaryColor;
+
     return SingleChildScrollView(
       controller: _scrollController,
       padding: EdgeInsets.fromLTRB(
-        16, 
-        isLargeScreen ? 16 : 86, 
-        16, 
-        16
+        isLargeScreen ? 24 : 16,
+        isLargeScreen ? 24 : 86,
+        isLargeScreen ? 24 : 16,
+        24,
       ),
       physics: const BouncingScrollPhysics(),
       child: ConstrainedBox(
         constraints: BoxConstraints(
-          minHeight: MediaQuery.of(context).size.height - (isLargeScreen ? 100 : 180), 
+          minHeight:
+              MediaQuery.of(context).size.height - (isLargeScreen ? 100 : 180),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            // About section
-            Container(
-              key: _sectionKeys['professional_summary'],
-              child: const SectionCard(
-                title: 'About',
-                icon: Icons.person,
-                accentColor: Color(0xFFFBAD48),
-                content: Text(
-                  ResumeConstants.profileIntro,
-                  style: TextStyle(fontSize: 16, height: 1.6),
-                ),
-              ),
-            ),
-            
-            
-            // Experience section
-            Container(
-              key: _sectionKeys['experience'],
-              child: _buildExperienceSection(),
+            // Hero landing block
+            HeroSection(
+              onDownloadCv: () => PdfConfig.exportResumePdf(context),
+              onOpenChat: () {
+                if (!_chatOpen) _toggleChat();
+              },
+              onViewProjects: () => _scrollToSection('online_presence'),
             ),
 
-            // Technical Skills section
-            Container(
-              key: _sectionKeys['skills'],
-              child: const Padding(
-                padding: EdgeInsets.symmetric(vertical: 12),
-                child: SkillsSection(),
-              ),
-            ),
-            Container(
-              key: _sectionKeys['certifications'],
-              child: const SectionCard(
-                title: 'Certifications',
-                icon: Icons.workspace_premium,
-                accentColor: accentColor,
-                content: CertificationCarouselWidget(),
-                    ),
+            // About section — data from ResumeConstants
+            RevealOnScroll(
+              child: Container(
+                key: _sectionKeys['professional_summary'],
+                child: const SectionCard(
+                  title: 'About',
+                  icon: Icons.person_outline_rounded,
+                  accentColor: accentColor,
+                  content: Text(
+                    ResumeConstants.profileIntro,
+                    style: TextStyle(fontSize: 15, height: 1.65),
                   ),
-                  
-                  Container(
-                    key: _sectionKeys['languages'],
-                    child: const SectionCard(
-                      title: 'Languages',
-                      icon: Icons.language,
-                      accentColor: accentColor,
-                      content: LanguageProficiencyWidget(
-                        languages: [
-                          LanguageProficiency(
-                            language: 'English',
-                            flagCode: 'us',
-                            readingLevel: 0.95,
-                            writingLevel: 0.9,
-                            speakingLevel: 0.85,
-                            listeningLevel: 0.95,
-                            certification: 'Maltepe University\n'
-                            'School of Foreign Languages - 80/100',
-                          ),
-                          LanguageProficiency(
-                            language: 'Turkish',
-                            flagCode: 'tr',
-                            readingLevel: 1.0,
-                            writingLevel: 1.0,
-                            speakingLevel: 1.0,
-                            listeningLevel: 1.0,
-                          ),
-                        ],
-                        accentColor: accentColor,
-                      ),
-                    ),
-                  ),
-            
-            // Education section
-            Container(
-              key: _sectionKeys['education'],
-              child: const SectionCard(
-                title: 'Education',
-                icon: Icons.school,
-                accentColor: Color(0xFFFBAD48),
-                content: Text(
-                  ResumeConstants.educationSummary,
-                  style: TextStyle(fontSize: 16, height: 1.6),
                 ),
               ),
             ),
-            
-            // Merged GitHub Projects with Online Presence
-            Container(
-              key: _sectionKeys['online_presence'],
-              child: SectionCard(
-                title: 'Online Presence & Projects',
-                icon: Icons.public,
-                accentColor: accentColor,
-                content: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // GitHub Projects
-                    Text(
-                      'GitHub Projects',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).textTheme.bodyLarge?.color,
+
+            // Experience section — data from ResumeConstants.experiences
+            RevealOnScroll(
+              child: Container(
+                key: _sectionKeys['experience'],
+                child: _buildExperienceSection(),
+              ),
+            ),
+
+            // Technical Skills — data from ResumeConstants.skills
+            RevealOnScroll(
+              child: Container(
+                key: _sectionKeys['skills'],
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: SkillsSection(),
+                ),
+              ),
+            ),
+
+            // Certifications — data from ResumeConstants.certifications
+            RevealOnScroll(
+              child: Container(
+                key: _sectionKeys['certifications'],
+                child: SectionCard(
+                  title: 'Certifications',
+                  icon: Icons.workspace_premium_rounded,
+                  accentColor: accentColor,
+                  content: CertificationCarouselWidget(
+                    certifications: ResumeConstants.certifications,
+                  ),
+                ),
+              ),
+            ),
+
+            // Languages — data from ResumeConstants.languageProficiencies
+            RevealOnScroll(
+              child: Container(
+                key: _sectionKeys['languages'],
+                child: SectionCard(
+                  title: 'Languages',
+                  icon: Icons.language_rounded,
+                  accentColor: accentColor,
+                  content: LanguageProficiencyWidget(
+                    languages: ResumeConstants.languageProficiencies
+                        .map(
+                          (lp) => LanguageProficiency(
+                            language: lp['language'] as String,
+                            flagCode: lp['flagCode'] as String,
+                            readingLevel:
+                                (lp['readingLevel'] as num).toDouble(),
+                            writingLevel:
+                                (lp['writingLevel'] as num).toDouble(),
+                            speakingLevel:
+                                (lp['speakingLevel'] as num).toDouble(),
+                            listeningLevel:
+                                (lp['listeningLevel'] as num).toDouble(),
+                            certification: lp['certification'] as String?,
+                          ),
+                        )
+                        .toList(),
+                    accentColor: accentColor,
+                  ),
+                ),
+              ),
+            ),
+
+            // Education — data from ResumeConstants.educationSummary
+            RevealOnScroll(
+              child: Container(
+                key: _sectionKeys['education'],
+                child: const SectionCard(
+                  title: 'Education',
+                  icon: Icons.school_rounded,
+                  accentColor: accentColor,
+                  content: Text(
+                    ResumeConstants.educationSummary,
+                    style: TextStyle(fontSize: 15, height: 1.65),
+                  ),
+                ),
+              ),
+            ),
+
+            // Online Presence
+            RevealOnScroll(
+              child: Container(
+                key: _sectionKeys['online_presence'],
+                child: SectionCard(
+                  title: 'Online Presence & Projects',
+                  icon: Icons.public_rounded,
+                  accentColor: accentColor,
+                  content: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'GitHub Projects',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: colors.text,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    const PinnedGithubReposWidget(),
-                    
-                    const SizedBox(height: 32),
-                    Divider(color: Theme.of(context).dividerColor),
-                    const SizedBox(height: 32),
-                    
-                    // GitHub Activity Calendar
-                    const GitHubActivityCalendar(
-                      username: 'eccsm',
-                      numberOfWeeks: 20,
-                    ),
-                    const SizedBox(height: 32),
-                    const Divider(height: 1, color: Colors.grey),
-                    const SizedBox(height: 32),
-                    
-                    // Badge Gallery
-                    const BadgeGalleryWidget(),
-                  ],
+                      const SizedBox(height: 16),
+                      PinnedGithubReposWidget(
+                        onReposLoaded: _onReposLoaded,
+                      ),
+                      const SizedBox(height: 32),
+                      Divider(color: colors.divider),
+                      const SizedBox(height: 32),
+                      GithubRealContributionGraph(
+                        username: 'eccsm',
+                        refreshInterval: const Duration(hours: 24),
+                      ),
+                      const SizedBox(height: 32),
+                      Divider(color: colors.divider),
+                      const SizedBox(height: 32),
+                      const BadgeGalleryWidget(),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -444,6 +378,8 @@ class _ResumePageState extends State<ResumePage> with TickerProviderStateMixin, 
   }
 
   Widget _buildExperienceSection() {
+    final colors = AppTheme.getColors(context);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -451,113 +387,203 @@ class _ResumePageState extends State<ResumePage> with TickerProviderStateMixin, 
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
           child: Row(
             children: [
-              Icon(Icons.work, color: Theme.of(context).primaryColor, size: 28),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withAlpha(25),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.work_rounded,
+                    color: AppTheme.primaryColor, size: 24),
+              ),
               const SizedBox(width: 12),
               Text(
                 'Experience',
                 style: TextStyle(
-                  fontSize: 22, 
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).primaryColor,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                  color: colors.text,
+                  letterSpacing: -0.3,
                 ),
               ),
             ],
           ),
         ),
-        for (final experience in ResumeConstants.experiences)
+        for (int i = 0; i < ResumeConstants.experiences.length; i++)
           TimelineExperienceCard(
-            title: experience.title,
-            role: experience.role,
-            location: experience.location,
-            period: '2022 - Present', 
-            points: experience.points,
-            notableProjects: experience.notableProjects,
-            accentColor: Theme.of(context).primaryColor,
+            title: ResumeConstants.experiences[i].title,
+            role: ResumeConstants.experiences[i].role,
+            location: ResumeConstants.experiences[i].location,
+            period: ResumeConstants.experiences[i].period,
+            points: ResumeConstants.experiences[i].points,
+            notableProjects: ResumeConstants.experiences[i].notableProjects,
+            accentColor: AppTheme.primaryColor,
+            isFirst: i == 0,
           ),
       ],
+    );
+  }
+
+  Widget _buildChatButton() {
+    final colors = AppTheme.getColors(context);
+    final webLLMService = Provider.of<WebLLMService>(context);
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: _chatOpen
+                ? AppTheme.primaryColor.withAlpha(60)
+                : AppTheme.secondaryColor.withAlpha(30),
+            blurRadius: 16,
+            spreadRadius: 2,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: FloatingActionButton(
+        onPressed: _toggleChat,
+        backgroundColor: _chatOpen ? AppTheme.primaryColor : colors.card,
+        elevation: 0,
+        tooltip: 'Chat with AI Assistant',
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              transitionBuilder: (child, animation) {
+                return ScaleTransition(scale: animation, child: child);
+              },
+              child: Icon(
+                _chatOpen ? Icons.close_rounded : Icons.chat_bubble_rounded,
+                key: ValueKey(_chatOpen),
+                color: _chatOpen ? Colors.white : AppTheme.primaryColor,
+                size: 24,
+              ),
+            ),
+            // Status dot
+            if (webLLMService.isFallbackMode && !_chatOpen)
+              Positioned(
+                right: 2,
+                top: 2,
+                child: Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryColor,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: colors.card,
+                      width: 1.5,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Feeds fetched GitHub repos into the chatbot's system prompt so the
+  /// AI assistant can talk about live projects.
+  void _onReposLoaded(List<Map<String, dynamic>> repos) {
+    final summaries = repos
+        .map((r) {
+          final desc = (r['description'] ?? '').toString();
+          final lang = (r['language'] ?? '').toString();
+          return '${r['name']}'
+              '${lang.isNotEmpty ? ' ($lang)' : ''}'
+              '${desc.isNotEmpty ? ': $desc' : ''}';
+        })
+        .toList();
+    context.read<WebLLMService>().updateSystemPrompt(pinnedRepos: summaries);
+  }
+
+  Widget _buildChatWidget() {
+    final webLLMService = Provider.of<WebLLMService>(context);
+
+    return ChatContainer(
+      onClose: () => _toggleChat(),
+      webLLMService: webLLMService,
+      onNavigateToSection: _scrollToSection,
     );
   }
 
   @override
   Widget build(BuildContext context) {
     bool isLargeScreen = ResponsiveBreakpoints.of(context).largerThan(TABLET);
-    
+
     return Scaffold(
       extendBodyBehindAppBar: false,
       appBar: isLargeScreen
           ? null
           : AppBar(
               backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
-              elevation: 4,
-              shadowColor: Colors.black.withOpacity(0.5),
-              toolbarHeight: 60,
+              elevation: 0,
+              scrolledUnderElevation: 4,
+              toolbarHeight: 56,
               titleSpacing: 0,
-              actions: [
-                ThemeToggleWidget(
-                  onThemeChanged: widget.onThemeChanged,
-                  currentTheme: widget.currentTheme,
-                ),
-                const SizedBox(width: 8),
+              actions: const [
+                ThemeToggleWidget(isCompact: true),
+                SizedBox(width: 8),
               ],
             ),
       drawer: isLargeScreen
           ? null
           : NavigationPane(
-              isDrawer: true, 
-              onPdfExport: () => ApiConfig.exportResumePdf(context),
-              onNavigate: _scrollToSection, 
+              isDrawer: true,
+              onPdfExport: () => PdfConfig.exportResumePdf(context),
+              onNavigate: _scrollToSection,
               activeSection: _activeSection,
             ),
-      body: Stack(
+      floatingActionButton: _buildChatButton(),
+      body: Column(
         children: [
-          // Animated background
-          _buildAnimatedBackground(),
-          
-          // Main content
-          Row(
-            children: [
-              if (isLargeScreen)
-                SizedBox(
-                  width: 280, 
-                  child: NavigationPane(
-                    isDrawer: false, 
-                    onPdfExport: () => ApiConfig.exportResumePdf(context),
-                    onNavigate: _scrollToSection, 
-                    activeSection: _activeSection,
-                    extraWidgets: [
-                      ThemeToggleWidget(
-                        onThemeChanged: widget.onThemeChanged,
-                        currentTheme: widget.currentTheme,
-                      ),
-                    ],
-                  ),
-                ),
-              Expanded(
-                child: Stack(
+          Expanded(
+            child: Stack(
+              children: [
+                _buildAnimatedBackground(),
+                Row(
                   children: [
-                    _buildResumeContent(),
-                    // Chat Overlay
-                    if (_chatOpen) const DraggableChatWidget(),
+                    if (isLargeScreen)
+                      SizedBox(
+                        width: 280,
+                        child: NavigationPane(
+                          isDrawer: false,
+                          onPdfExport: () => PdfConfig.exportResumePdf(context),
+                          onNavigate: _scrollToSection,
+                          activeSection: _activeSection,
+                          extraWidgets: const [
+                            ThemeToggleWidget(isCompact: true),
+                          ],
+                        ),
+                      ),
+                    Expanded(
+                      child: Stack(
+                        children: [
+                          _buildResumeContent(),
+                          // Chat Overlay
+                          if (_chatOpen)
+                            Positioned(
+                              bottom: 80,
+                              right: 20,
+                              width: MediaQuery.of(context).size.width < 500
+                                  ? MediaQuery.of(context).size.width * 0.92
+                                  : 380,
+                              height: MediaQuery.of(context).size.height < 600
+                                  ? MediaQuery.of(context).size.height * 0.75
+                                  : 520,
+                              child: _buildChatWidget(),
+                            ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
-              ),
-            ],
-          ),
-          
-          // Floating chat button
-          Positioned(
-            top: _chatbotTop,
-            left: _chatbotLeft,
-            child: EnhancedChatbotWidget(
-              onTap: _toggleChat,
-              onDragEnd: (newPosition) {
-                setState(() {
-                  _chatbotTop = newPosition.dy.clamp(
-                      20.0, MediaQuery.of(context).size.height - 80);
-                  _chatbotLeft = newPosition.dx.clamp(
-                      20.0, MediaQuery.of(context).size.width - 80);
-                });
-              },
+              ],
             ),
           ),
         ],

@@ -1,32 +1,53 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:firebase_analytics/firebase_analytics.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:cc_resume_app/main.dart';
+import 'package:cc_resume_app/data/resume_knowledge.dart';
+import 'package:cc_resume_app/pdf/resume_constants.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    final FirebaseAnalytics analytics = FirebaseAnalytics.instance;
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(ResumeApp(analytics: analytics,));
+  group('ResumeConstants', () {
+    test('every experience has a non-empty period', () {
+      for (final exp in ResumeConstants.experiences) {
+        expect(exp.period, isNotEmpty, reason: '${exp.title} missing period');
+        expect(exp.location, isNot(contains('|')),
+            reason: '${exp.title} location still contains the period');
+      }
+    });
+  });
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+  group('ResumeKnowledge', () {
+    test('system prompt is grounded in resume facts', () {
+      final prompt = ResumeKnowledge.buildSystemPrompt();
+      expect(prompt, contains(ResumeConstants.name));
+      expect(prompt, contains('Medisa'));
+      expect(prompt, contains(ResumeConstants.contactEmail));
+    });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    test('system prompt includes pinned repos when provided', () {
+      final prompt = ResumeKnowledge.buildSystemPrompt(
+          pinnedRepos: ['linguana (Dart): language learning app']);
+      expect(prompt, contains('linguana'));
+    });
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    test('keyword responses cover the main topics', () {
+      expect(ResumeKnowledge.keywordResponse('Tell me about his Java skills'),
+          contains('Java'));
+      expect(ResumeKnowledge.keywordResponse('kafka experience?'),
+          contains('Kafka'));
+      expect(ResumeKnowledge.keywordResponse('anything with AI?'),
+          contains('OpenAI'));
+    });
+
+    test('pdf intent detection', () {
+      expect(ResumeKnowledge.wantsPdf('can I download the CV?'), isTrue);
+      expect(ResumeKnowledge.wantsPdf('what about kafka?'), isFalse);
+    });
+
+    test('section navigation intents', () {
+      expect(ResumeKnowledge.sectionForQuery('show me his projects'),
+          'online_presence');
+      expect(ResumeKnowledge.sectionForQuery('what is his tech stack'),
+          'skills');
+      expect(ResumeKnowledge.sectionForQuery('hello'), isNull);
+    });
   });
 }
