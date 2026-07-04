@@ -1,0 +1,40 @@
+# Self-hosted Umami analytics for casim.net.
+# Usage:
+#   cp .env.example .env   # fill in the two secrets
+#   docker compose up -d
+# Then put stats.casim.net in front of port 3000 via your reverse proxy
+# (Caddy/nginx/Cloudflare Tunnel) with TLS.
+services:
+  umami:
+    image: ghcr.io/umami-software/umami:postgresql-latest
+    ports:
+      - '3000:3000'
+    environment:
+      DATABASE_URL: postgresql://umami:${POSTGRES_PASSWORD}@db:5432/umami
+      DATABASE_TYPE: postgresql
+      APP_SECRET: ${APP_SECRET}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -fsS http://localhost:3000/api/heartbeat || exit 1']
+      interval: 30s
+      retries: 3
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: umami
+      POSTGRES_USER: umami
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - umami-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U umami -d umami']
+      interval: 5s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  umami-db:

@@ -1,0 +1,450 @@
+---
+import { contact } from '../data/resume';
+
+// Widget renders only when a backend is configured, so the site works
+// (and stays zero-extra-JS) before the worker is deployed.
+const endpoint = import.meta.env.PUBLIC_CHAT_ENDPOINT as string | undefined;
+
+const starters = [
+  "What's his Java experience?",
+  'Has he led teams?',
+  'Why is he a fit for architect roles?',
+];
+---
+
+{
+  endpoint && (
+    <div class="chat-root" data-endpoint={endpoint} data-email={contact.email}>
+      <button
+        id="chat-open"
+        type="button"
+        aria-expanded="false"
+        aria-controls="chat-panel"
+        data-umami-event="chat-open"
+      >
+        <svg
+          aria-hidden="true"
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+        </svg>
+        <span class="visually-hidden">Ask my resume</span>
+      </button>
+
+      <section id="chat-panel" hidden aria-label="Ask my resume chat">
+        <header>
+          <h2>Ask my resume</h2>
+          <button id="chat-close" type="button" aria-label="Close chat">×</button>
+        </header>
+        <div id="chat-log" role="log" aria-live="polite" />
+        <div id="chat-starters">
+          {starters.map((q) => (
+            <button type="button" class="starter" data-q={q}>
+              {q}
+            </button>
+          ))}
+        </div>
+        <form id="chat-form">
+          <label class="visually-hidden" for="chat-input">
+            Your question
+          </label>
+          <input
+            id="chat-input"
+            type="text"
+            maxlength="500"
+            autocomplete="off"
+            placeholder="Ask about experience, skills, projects…"
+          />
+          <button type="submit" class="button-primary" id="chat-send">
+            Send
+          </button>
+        </form>
+      </section>
+    </div>
+  )
+}
+
+<script>
+  const root = document.querySelector<HTMLElement>('.chat-root');
+  if (root) initChat(root);
+
+  function initChat(root: HTMLElement) {
+    const endpoint = root.dataset.endpoint!.replace(/\/$/, '');
+    const email = root.dataset.email!;
+    const openBtn = root.querySelector<HTMLButtonElement>('#chat-open')!;
+    const panel = root.querySelector<HTMLElement>('#chat-panel')!;
+    const closeBtn = root.querySelector<HTMLButtonElement>('#chat-close')!;
+    const log = root.querySelector<HTMLElement>('#chat-log')!;
+    const starters = root.querySelector<HTMLElement>('#chat-starters')!;
+    const form = root.querySelector<HTMLFormElement>('#chat-form')!;
+    const input = root.querySelector<HTMLInputElement>('#chat-input')!;
+    const send = root.querySelector<HTMLButtonElement>('#chat-send')!;
+
+    let busy = false;
+    let ttsAvailable = true;
+    let currentAudio: HTMLAudioElement | null = null;
+
+    openBtn.addEventListener('click', () => {
+      const open = panel.hidden;
+      panel.hidden = !open;
+      openBtn.setAttribute('aria-expanded', String(open));
+      if (open) input.focus();
+    });
+    closeBtn.addEventListener('click', () => {
+      panel.hidden = true;
+      openBtn.setAttribute('aria-expanded', 'false');
+      openBtn.focus();
+    });
+
+    starters.addEventListener('click', (e) => {
+      const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('.starter');
+      if (btn?.dataset.q) ask(btn.dataset.q);
+    });
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const q = input.value.trim();
+      if (q) ask(q);
+    });
+
+    function bubble(role: 'user' | 'assistant', text = ''): HTMLElement {
+      const el = document.createElement('div');
+      el.className = `msg ${role}`;
+      const p = document.createElement('p');
+      p.textContent = text;
+      el.appendChild(p);
+      log.appendChild(el);
+      log.scrollTop = log.scrollHeight;
+      return el;
+    }
+
+    function note(text: string) {
+      const el = document.createElement('p');
+      el.className = 'note';
+      el.textContent = text;
+      log.appendChild(el);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    async function ask(question: string) {
+      if (busy) return;
+      busy = true;
+      send.disabled = true;
+      input.value = '';
+      starters.hidden = true;
+      bubble('user', question);
+      const reply = bubble('assistant');
+      const p = reply.querySelector('p')!;
+
+      try {
+        const res = await fetch(`${endpoint}/ask`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question }),
+        });
+
+        if (res.status === 429) {
+          const { error } = await res.json().catch(() => ({ error: '' }));
+          reply.remove();
+          note(
+            error === 'daily_cap'
+              ? `The assistant is resting — email me instead: ${email}`
+              : 'A few too many questions from your connection — try again in an hour, or just email me.'
+          );
+          return;
+        }
+        if (!res.ok) throw new Error(String(res.status));
+
+        if (res.headers.get('Content-Type')?.includes('application/json')) {
+          const { answer } = (await res.json()) as { answer: string };
+          p.textContent = answer;
+        } else {
+          await readSse(res, (delta) => {
+            p.textContent += delta;
+            log.scrollTop = log.scrollHeight;
+          });
+        }
+        if (p.textContent) addListenButton(reply, p.textContent);
+      } catch {
+        reply.remove();
+        note(`Something went wrong — you can always email me: ${email}`);
+      } finally {
+        busy = false;
+        send.disabled = false;
+      }
+    }
+
+    async function readSse(res: Response, onDelta: (t: string) => void) {
+      const reader = res.body!.getReader();
+      const decoder = new TextDecoder();
+      let buf = '';
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        let nl;
+        while ((nl = buf.indexOf('\n')) !== -1) {
+          const line = buf.slice(0, nl).trim();
+          buf = buf.slice(nl + 1);
+          if (!line.startsWith('data:')) continue;
+          try {
+            const ev = JSON.parse(line.slice(5));
+            if (ev.type === 'content_block_delta' && ev.delta?.type === 'text_delta') {
+              onDelta(ev.delta.text);
+            }
+          } catch {
+            /* partial line */
+          }
+        }
+      }
+    }
+
+    function addListenButton(msg: HTMLElement, text: string) {
+      // Backend only synthesizes short answers; don't show a button that 413s.
+      if (!ttsAvailable || text.length >= 600) return;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'listen';
+      btn.setAttribute('aria-label', 'Listen to this answer');
+      btn.textContent = '▶ Listen';
+      let audio: HTMLAudioElement | null = null;
+
+      btn.addEventListener('click', async () => {
+        // Toggle pause/resume on this message's own audio.
+        if (audio) {
+          if (audio.paused) play(audio, btn);
+          else audio.pause();
+          return;
+        }
+        btn.disabled = true;
+        btn.textContent = '… Loading';
+        try {
+          const res = await fetch(`${endpoint}/tts`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text }),
+          });
+          if (!res.ok) throw new Error(String(res.status));
+          audio = new Audio(URL.createObjectURL(await res.blob()));
+          audio.addEventListener('pause', () => (btn.textContent = '▶ Listen'));
+          audio.addEventListener('ended', () => (btn.textContent = '▶ Listen'));
+          audio.addEventListener('play', () => (btn.textContent = '⏸ Pause'));
+          play(audio, btn);
+        } catch {
+          // Endpoint errored (cap hit, upstream down) — hide listen buttons
+          // for the rest of the session instead of surfacing an error.
+          ttsAvailable = false;
+          root.querySelectorAll('.listen').forEach((b) => b.remove());
+        } finally {
+          btn.disabled = false;
+          if (btn.isConnected && btn.textContent === '… Loading') {
+            btn.textContent = '▶ Listen';
+          }
+        }
+      });
+
+      msg.appendChild(btn);
+    }
+
+    function play(audio: HTMLAudioElement, _toggle: HTMLButtonElement) {
+      // One message at a time: pause whatever else is playing.
+      if (currentAudio && currentAudio !== audio) currentAudio.pause();
+      currentAudio = audio;
+      void audio.play();
+    }
+  }
+</script>
+
+<style>
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .chat-root {
+    position: fixed;
+    right: var(--space-4);
+    bottom: var(--space-4);
+    z-index: 20;
+  }
+
+  #chat-open {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--space-7);
+    height: var(--space-7);
+    border: none;
+    border-radius: 50%;
+    background: var(--color-accent-fill);
+    color: var(--color-on-accent);
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgb(0 0 0 / 0.25);
+  }
+
+  #chat-open:hover,
+  #chat-open:focus-visible {
+    filter: brightness(1.08);
+  }
+
+  #chat-panel {
+    position: absolute;
+    right: 0;
+    bottom: calc(var(--space-7) + var(--space-3));
+    width: min(22rem, calc(100vw - var(--space-6)));
+    height: 28rem;
+    display: flex;
+    flex-direction: column;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    box-shadow: 0 8px 32px rgb(0 0 0 / 0.3);
+    overflow: hidden;
+  }
+
+  #chat-panel[hidden] {
+    display: none;
+  }
+
+  #chat-panel header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  #chat-panel h2 {
+    font-size: var(--text-body);
+    margin: 0;
+  }
+
+  #chat-panel h2::before {
+    width: var(--space-2);
+    height: var(--space-2);
+  }
+
+  #chat-close {
+    border: none;
+    background: none;
+    color: var(--color-text-muted);
+    font-size: var(--text-h3);
+    cursor: pointer;
+    line-height: 1;
+    padding: var(--space-1);
+  }
+
+  #chat-close:hover {
+    color: var(--color-accent);
+  }
+
+  #chat-log {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--space-3) var(--space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  #chat-log :global(.msg p) {
+    margin: 0;
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-chip);
+    font-size: var(--text-small);
+    white-space: pre-wrap;
+  }
+
+  #chat-log :global(.msg.user p) {
+    background: var(--color-chip-bg);
+    margin-left: var(--space-6);
+  }
+
+  #chat-log :global(.msg.assistant p) {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    margin-right: var(--space-6);
+  }
+
+  #chat-log :global(.note) {
+    margin: 0;
+    font-size: var(--text-small);
+    color: var(--color-error);
+  }
+
+  #chat-log :global(.listen) {
+    margin-top: var(--space-1);
+    border: 1px solid var(--color-border);
+    background: none;
+    color: var(--color-text-muted);
+    border-radius: var(--radius-chip);
+    font-size: var(--text-chip);
+    font-family: var(--font-mono);
+    padding: var(--space-1) var(--space-2);
+    cursor: pointer;
+  }
+
+  #chat-log :global(.listen:hover) {
+    color: var(--color-accent);
+    border-color: var(--color-accent);
+  }
+
+  #chat-starters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    padding: 0 var(--space-4) var(--space-3);
+  }
+
+  .starter {
+    border: 1px solid var(--color-border);
+    background: none;
+    color: var(--color-text);
+    border-radius: var(--radius-chip);
+    padding: var(--space-1) var(--space-3);
+    font-size: var(--text-chip);
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .starter:hover,
+  .starter:focus-visible {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+
+  #chat-form {
+    display: flex;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+    border-top: 1px solid var(--color-border);
+  }
+
+  #chat-input {
+    flex: 1;
+    min-width: 0;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-chip);
+    color: var(--color-text);
+    padding: var(--space-2) var(--space-3);
+    font: inherit;
+    font-size: var(--text-small);
+  }
+
+  #chat-input:focus-visible {
+    outline: 2px solid var(--color-accent-fill);
+    outline-offset: 1px;
+  }
+</style>

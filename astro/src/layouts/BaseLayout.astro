@@ -1,0 +1,146 @@
+---
+import '../styles/global.css';
+import {
+  profile,
+  experiences,
+  education,
+  contact,
+  knowsAbout,
+} from '../data/resume';
+
+interface Props {
+  title: string;
+  description: string;
+}
+
+const { title, description } = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const ogImage = new URL('/og.png', Astro.site);
+
+// Cookieless Umami analytics — rendered only when configured (see
+// analytics/README.md), so the default build ships no tracking at all.
+const umamiSrc = import.meta.env.PUBLIC_UMAMI_SRC as string | undefined;
+const umamiId = import.meta.env.PUBLIC_UMAMI_WEBSITE_ID as string | undefined;
+const analyticsEnabled = Boolean(umamiSrc && umamiId);
+
+// Person schema with role-wrapped work history (schema.org "role" pattern:
+// an EmployeeRole node between the Person and each Organization carries
+// roleName + dates).
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: profile.name,
+  jobTitle: profile.title,
+  description: profile.tagline,
+  url: Astro.site?.toString(),
+  email: `mailto:${contact.email}`,
+  address: {
+    '@type': 'PostalAddress',
+    addressLocality: 'Istanbul',
+    addressCountry: 'TR',
+  },
+  sameAs: [contact.linkedin, contact.github],
+  knowsAbout,
+  alumniOf: education.map((e) => ({
+    '@type': 'CollegeOrUniversity',
+    name: e.institution,
+  })),
+  worksFor: experiences
+    .filter((e) => e.end === null)
+    .map((e) => ({ '@type': 'Organization', name: e.company })),
+  hasOccupation: experiences.map((e) => ({
+    '@type': 'EmployeeRole',
+    roleName: e.role,
+    startDate: e.start,
+    ...(e.end ? { endDate: e.end } : {}),
+    worksFor: { '@type': 'Organization', name: e.company },
+  })),
+};
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link
+      rel="preload"
+      href="/fonts/InterVariable.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <meta name="generator" content={Astro.generator} />
+
+    <meta property="og:type" content="profile" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={`${profile.name} — ${profile.title}`} />
+    <meta property="og:site_name" content="casim.net" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+
+    {analyticsEnabled && (
+      <script
+        is:inline
+        defer
+        src={umamiSrc}
+        data-website-id={umamiId}
+        data-do-not-track="true"
+      />
+    )}
+    {analyticsEnabled && (
+      // Section-visibility events: fires `section-view` once per section per
+      // visit. data-umami-event clicks (nav, hero, contact, chat) are handled
+      // by the Umami script itself.
+      <script is:inline>
+        addEventListener('load', () => {
+          const seen = new Set();
+          const io = new IntersectionObserver(
+            (entries) => {
+              for (const entry of entries) {
+                const id = entry.target.id;
+                if (entry.isIntersecting && !seen.has(id)) {
+                  seen.add(id);
+                  window.umami?.track('section-view', { section: id });
+                }
+              }
+            },
+            { threshold: 0.1 }
+          );
+          document.querySelectorAll('main section[id]').forEach((s) => io.observe(s));
+        });
+      </script>
+    )}
+
+    <!-- Apply the saved theme before first paint to avoid a flash.
+         This plus the toggle handler is the only client-side JS on the site. -->
+    <script is:inline>
+      (() => {
+        const stored = localStorage.getItem('theme');
+        const theme =
+          stored ??
+          (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        document.documentElement.dataset.theme = theme;
+      })();
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <slot />
+  </body>
+</html>

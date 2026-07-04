@@ -1,0 +1,60 @@
+---
+import { experiences } from '../data/resume';
+---
+
+<section id="experience" class="section" aria-labelledby="experience-heading">
+  <h2 id="experience-heading">Experience</h2>
+  <div class="entries">
+    {experiences.map((exp) => (
+      <article class="card">
+        <header>
+          <h3>{exp.role}</h3>
+          <p class="org">
+            {exp.company} · {exp.location}
+          </p>
+          <p class="period">
+            <time datetime={exp.start}>{exp.periodLabel.split(' – ')[0]}</time>
+            {' – '}
+            {exp.end ? (
+              <time datetime={exp.end}>{exp.periodLabel.split(' – ')[1]}</time>
+            ) : (
+              <span>Present</span>
+            )}
+          </p>
+        </header>
+        <ul>
+          {exp.points.map((point) => (
+            <li>{point}</li>
+          ))}
+        </ul>
+        <ul class="chip-list" aria-label="Technologies">
+          {exp.tags.map((tag) => (
+            <li><span class="chip">{tag}</span></li>
+          ))}
+        </ul>
+      </article>
+    ))}
+  </div>
+</section>
+
+<style>
+  .entries {
+    display: grid;
+    gap: var(--space-5);
+  }
+
+  .org {
+    margin: var(--space-1) 0 0;
+    font-weight: 500;
+  }
+
+  .period {
+    margin: 0 0 0;
+    color: var(--color-text-muted);
+    font-size: var(--text-small);
+  }
+
+  article ul:not(.chip-list) {
+    margin: var(--space-4) 0 0;
+  }
+</style>

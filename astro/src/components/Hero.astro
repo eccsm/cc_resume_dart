@@ -1,0 +1,61 @@
+---
+import { profile, contact } from '../data/resume';
+---
+
+<section id="top" class="section hero" aria-label="Introduction">
+  <p class="kicker">{profile.location}</p>
+  <h1>{profile.name}</h1>
+  <p class="role">{profile.title}</p>
+  <p class="intro">{profile.intro}</p>
+  <ul class="hero-links" aria-label="Profiles">
+    <li><a class="button-primary" href={`mailto:${contact.email}`}>Email me</a></li>
+    <li><a class="button-secondary" href={contact.linkedin} rel="me" data-umami-event="outbound-linkedin">LinkedIn</a></li>
+    <li><a class="button-secondary" href={contact.github} rel="me" data-umami-event="outbound-github">GitHub</a></li>
+    <li><a class="button-secondary" href={contact.huggingface} rel="me" data-umami-event="outbound-huggingface">Hugging Face</a></li>
+  </ul>
+</section>
+
+<style>
+  .hero {
+    padding-top: var(--space-7);
+    padding-bottom: var(--space-7);
+  }
+
+  .kicker {
+    margin: 0 0 var(--space-1);
+    color: var(--color-text-muted);
+    font-size: var(--text-small);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  h1 {
+    font-size: var(--text-hero);
+    margin: 0;
+  }
+
+  .role {
+    font-size: var(--text-h3);
+    color: var(--color-text-muted);
+    font-weight: 600;
+    margin: var(--space-2) 0 var(--space-5);
+  }
+
+  .intro {
+    max-width: var(--content-width);
+    margin-bottom: var(--space-5);
+  }
+
+  .hero-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .hero-links li {
+    margin: 0;
+  }
+</style>

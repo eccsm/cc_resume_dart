@@ -1,0 +1,61 @@
+---
+import { education, certifications, languages } from '../data/resume';
+---
+
+<section id="education" class="section" aria-labelledby="education-heading">
+  <h2 id="education-heading">Education</h2>
+  <div class="grid">
+    {education.map((entry) => (
+      <article class="card">
+        <h3>{entry.degree}</h3>
+        <p class="org">{entry.institution} · {entry.location}</p>
+        <p class="period">
+          <time datetime={entry.start}>{entry.periodLabel.split(' – ')[0]}</time>
+          {' – '}
+          <time datetime={entry.end}>{entry.periodLabel.split(' – ')[1]}</time>
+        </p>
+      </article>
+    ))}
+  </div>
+
+  <h3 class="sub-heading">Certifications</h3>
+  <ul class="cert-list">
+    {certifications.map((cert) => (
+      <li>
+        <a href={cert.url}>{cert.name}</a> — {cert.issuer},{' '}
+        <time datetime={String(cert.year)}>{cert.year}</time>
+      </li>
+    ))}
+  </ul>
+
+  <h3 class="sub-heading">Languages</h3>
+  <ul>
+    {languages.map(({ language, level }) => (
+      <li>{language} — {level}</li>
+    ))}
+  </ul>
+</section>
+
+<style>
+  .grid {
+    display: grid;
+    gap: var(--space-5);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+  }
+
+  .org {
+    margin: var(--space-1) 0 0;
+    font-weight: 500;
+  }
+
+  .period {
+    margin: 0 0 0;
+    color: var(--color-text-muted);
+    font-size: var(--text-small);
+  }
+
+  .sub-heading {
+    margin-top: var(--space-6);
+    margin-bottom: var(--space-3);
+  }
+</style>

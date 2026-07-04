@@ -1,0 +1,55 @@
+---
+import { caseStudies } from '../data/resume';
+---
+
+<section id="case-studies" class="section" aria-labelledby="case-studies-heading">
+  <h2 id="case-studies-heading">Case Studies</h2>
+  <div class="grid">
+    {caseStudies.map((cs) => (
+      <article class="card" id={cs.slug}>
+        <h3>{cs.title}</h3>
+        <p class="client muted">{cs.client} · via {cs.employer}</p>
+        <h4>Challenge</h4>
+        <p>{cs.challenge}</p>
+        <h4>Approach</h4>
+        <ul>
+          {cs.approach.map((step) => (
+            <li>{step}</li>
+          ))}
+        </ul>
+        <h4>Outcome</h4>
+        <p>{cs.outcome}</p>
+        <ul class="chip-list" aria-label="Stack">
+          {cs.stack.map((tech) => (
+            <li><span class="chip">{tech}</span></li>
+          ))}
+        </ul>
+      </article>
+    ))}
+  </div>
+</section>
+
+<style>
+  .grid {
+    display: grid;
+    gap: var(--space-5);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 26rem), 1fr));
+  }
+
+  .client {
+    margin: var(--space-1) 0 var(--space-4);
+    font-size: var(--text-small);
+  }
+
+  h4 {
+    margin: var(--space-4) 0 var(--space-1);
+    font-size: var(--text-chip);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+
+  ul:not(.chip-list) {
+    margin: 0;
+  }
+</style>

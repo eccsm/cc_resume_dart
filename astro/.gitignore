@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.astro/
+.env
+.lighthouseci/
+# Generated at build time by scripts/generate-og.mjs
+public/og.png

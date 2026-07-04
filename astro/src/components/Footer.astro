@@ -1,0 +1,29 @@
+---
+const year = new Date().getFullYear();
+---
+
+<footer>
+  <p>© {year} Ekincan Casim</p>
+  <p>
+    <a href="https://flutter.casim.net">View the Flutter version</a> of this site
+  </p>
+</footer>
+
+<style>
+  footer {
+    max-width: var(--wide-width);
+    margin: 0 auto;
+    padding: var(--space-6) var(--space-4) var(--space-7);
+    border-top: 1px solid var(--color-border);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: var(--space-2) var(--space-5);
+    color: var(--color-text-muted);
+    font-size: var(--text-small);
+  }
+
+  footer p {
+    margin: 0;
+  }
+</style>

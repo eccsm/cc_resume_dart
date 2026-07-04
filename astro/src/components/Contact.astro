@@ -1,0 +1,50 @@
+---
+import { contact, profile } from '../data/resume';
+---
+
+<section id="contact" class="section" aria-labelledby="contact-heading">
+  <h2 id="contact-heading">Contact</h2>
+  <p class="pitch">
+    Based in {profile.location} and open to senior architect and tech lead
+    opportunities. The fastest way to reach me is email or LinkedIn.
+  </p>
+  <ul class="contact-list">
+    <li>
+      <span class="label">Email</span>
+      <a href={`mailto:${contact.email}`}>{contact.email}</a>
+    </li>
+    <li>
+      <span class="label">LinkedIn</span>
+      <a href={contact.linkedin} rel="me" data-umami-event="outbound-linkedin">linkedin.com/in/eccsm</a>
+    </li>
+    <li>
+      <span class="label">GitHub</span>
+      <a href={contact.github} rel="me" data-umami-event="outbound-github">github.com/eccsm</a>
+    </li>
+    <li>
+      <span class="label">Hugging Face</span>
+      <a href={contact.huggingface} rel="me" data-umami-event="outbound-huggingface">huggingface.co/eccsm</a>
+    </li>
+  </ul>
+</section>
+
+<style>
+  .pitch {
+    max-width: var(--content-width);
+  }
+
+  .contact-list {
+    list-style: none;
+    margin: var(--space-5) 0 0;
+    padding: 0;
+    display: grid;
+    gap: var(--space-2);
+  }
+
+  .label {
+    display: inline-block;
+    min-width: 7.5rem;
+    color: var(--color-text-muted);
+    font-size: var(--text-small);
+  }
+</style>

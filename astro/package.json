@@ -1,0 +1,25 @@
+{
+  "name": "casim-net-resume",
+  "type": "module",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev",
+    "prebuild": "node scripts/generate-og.mjs",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/sitemap": "^3.4.1",
+    "astro": "^5.12.0"
+  },
+  "devDependencies": {
+    "@resvg/resvg-js": "^2.6.2",
+    "satori": "^0.12.2",
+    "subset-font": "^2.5.0"
+  },
+  "optionalDependencies": {
+    "@resvg/resvg-js-win32-x64-msvc": "^2.6.2"
+  }
+}
