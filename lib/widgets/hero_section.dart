@@ -172,7 +172,7 @@ class _HeroSectionState extends State<HeroSection> {
             child: Text(
               '10+ years building enterprise platforms in insurance, banking '
               'and retail — from Kafka-backed microservices to '
-              'OpenAI-powered chatbots.',
+              'GenAI-powered chatbots.',
               style: GoogleFonts.inter(
                 fontSize: isNarrow ? 14 : 16,
                 height: 1.6,
