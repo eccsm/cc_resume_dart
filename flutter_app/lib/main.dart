@@ -1,4 +1,7 @@
-import 'package:cc_resume_app/pdf/resume_constants.dart';
+import 'dart:ui' show FlutterView;
+
+import 'package:cc_resume_app/data/resume_repository.dart';
+import 'package:cc_resume_app/models/resume.dart';
 import 'package:cc_resume_app/service/webllm_service.dart';
 import 'package:cc_resume_app/theme/app_theme.dart';
 import 'package:cc_resume_app/theme/theme_provider.dart';
@@ -13,24 +16,152 @@ import 'widgets/badge_gallery_widget.dart';
 import 'widgets/certification_carousel_widget.dart';
 import 'widgets/github_activity_calendar_widget.dart';
 import 'widgets/hero_section.dart';
-import 'widgets/language_proficiency_widget.dart';
 import 'widgets/reveal_on_scroll.dart';
 import 'widgets/section_card.dart';
 import 'widgets/skills_section.dart';
 import 'widgets/theme_toggle_widget.dart';
 import 'widgets/chat_widget.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        ChangeNotifierProvider(create: (_) => WebLLMService()),
-      ],
-      child: const ResumeApp(),
-    ),
-  );
+void main() {
+  // Multi-view: the host page (Astro shell) adds/removes views at will, so
+  // the widget tree is rendered per FlutterView instead of runApp's implicit
+  // single view. Running standalone (flutter run) works the same — there is
+  // exactly one implicit view.
+  runWidget(MultiViewApp(viewBuilder: (context) => const ResumeBootstrap()));
+}
+
+/// Renders one widget subtree per active [FlutterView], following the
+/// pattern from flutter.dev/go/multi-view-embedding.
+class MultiViewApp extends StatefulWidget {
+  const MultiViewApp({super.key, required this.viewBuilder});
+
+  final WidgetBuilder viewBuilder;
+
+  @override
+  State<MultiViewApp> createState() => _MultiViewAppState();
+}
+
+class _MultiViewAppState extends State<MultiViewApp>
+    with WidgetsBindingObserver {
+  Map<Object, Widget> _views = <Object, Widget>{};
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _updateViews();
+  }
+
+  @override
+  void didUpdateWidget(MultiViewApp oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _views.clear();
+    _updateViews();
+  }
+
+  @override
+  void didChangeMetrics() {
+    _updateViews();
+  }
+
+  void _updateViews() {
+    final newViews = <Object, Widget>{};
+    for (final FlutterView view
+        in WidgetsBinding.instance.platformDispatcher.views) {
+      newViews[view.viewId] = _views[view.viewId] ?? _createViewWidget(view);
+    }
+    setState(() {
+      _views = newViews;
+    });
+  }
+
+  Widget _createViewWidget(FlutterView view) {
+    return View(
+      view: view,
+      child: Builder(builder: widget.viewBuilder),
+    );
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ViewCollection(views: _views.values.toList(growable: false));
+  }
+}
+
+/// Gates the app on the resume.json fetch: loading spinner while it's in
+/// flight, error + retry when it fails, the full app once [Resume.I] is set.
+class ResumeBootstrap extends StatefulWidget {
+  const ResumeBootstrap({super.key});
+
+  @override
+  State<ResumeBootstrap> createState() => _ResumeBootstrapState();
+}
+
+class _ResumeBootstrapState extends State<ResumeBootstrap> {
+  late Future<Resume> _resume = ResumeRepository.load();
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<Resume>(
+      future: _resume,
+      builder: (context, snapshot) {
+        if (snapshot.hasData) {
+          return MultiProvider(
+            providers: [
+              ChangeNotifierProvider(create: (_) => ThemeProvider()),
+              ChangeNotifierProvider(create: (_) => WebLLMService()),
+            ],
+            child: const ResumeApp(),
+          );
+        }
+
+        return MaterialApp(
+          title: 'Resume',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.lightTheme(),
+          darkTheme: AppTheme.darkTheme(),
+          home: Scaffold(
+            body: Center(
+              child: snapshot.hasError
+                  ? Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.cloud_off_rounded, size: 40),
+                        const SizedBox(height: 12),
+                        const Text('Could not load resume data.'),
+                        const SizedBox(height: 4),
+                        Padding(
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: 24),
+                          child: Text(
+                            '${snapshot.error}',
+                            style: const TextStyle(fontSize: 12),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        FilledButton.icon(
+                          onPressed: () => setState(() {
+                            _resume = ResumeRepository.retry();
+                          }),
+                          icon: const Icon(Icons.refresh_rounded),
+                          label: const Text('Retry'),
+                        ),
+                      ],
+                    )
+                  : const CircularProgressIndicator(),
+            ),
+          ),
+        );
+      },
+    );
+  }
 }
 
 class ResumeApp extends StatelessWidget {
@@ -41,7 +172,7 @@ class ResumeApp extends StatelessWidget {
     final themeProvider = Provider.of<ThemeProvider>(context);
 
     return MaterialApp(
-      title: 'Ekincan Casim — Software Architect',
+      title: '${Resume.I.name} — ${Resume.I.title}',
       debugShowCheckedModeBanner: false,
       themeMode: themeProvider.themeMode,
       builder: (context, widget) => ResponsiveBreakpoints.builder(
@@ -236,23 +367,23 @@ class _ResumePageState extends State<ResumePage>
               showSocialIcons: !isLargeScreen,
             ),
 
-            // About section — data from ResumeConstants
+            // About section — data from resume.json
             RevealOnScroll(
               child: Container(
                 key: _sectionKeys['professional_summary'],
-                child: const SectionCard(
+                child: SectionCard(
                   title: 'About',
                   icon: Icons.person_outline_rounded,
                   accentColor: accentColor,
                   content: Text(
-                    ResumeConstants.profileIntro,
-                    style: TextStyle(fontSize: 15, height: 1.65),
+                    Resume.I.profileIntro,
+                    style: const TextStyle(fontSize: 15, height: 1.65),
                   ),
                 ),
               ),
             ),
 
-            // Experience section — data from ResumeConstants.experiences
+            // Experience section — data from resume.json
             RevealOnScroll(
               child: Container(
                 key: _sectionKeys['experience'],
@@ -260,7 +391,7 @@ class _ResumePageState extends State<ResumePage>
               ),
             ),
 
-            // Technical Skills — data from ResumeConstants.skills
+            // Technical Skills — data from resume.json
             RevealOnScroll(
               child: Container(
                 key: _sectionKeys['skills'],
@@ -271,7 +402,7 @@ class _ResumePageState extends State<ResumePage>
               ),
             ),
 
-            // Certifications — data from ResumeConstants.certifications
+            // Certifications — data from resume.json
             RevealOnScroll(
               child: Container(
                 key: _sectionKeys['certifications'],
@@ -280,13 +411,13 @@ class _ResumePageState extends State<ResumePage>
                   icon: Icons.workspace_premium_rounded,
                   accentColor: accentColor,
                   content: CertificationCarouselWidget(
-                    certifications: ResumeConstants.certifications,
+                    certifications: Resume.I.certifications,
                   ),
                 ),
               ),
             ),
 
-            // Languages — data from ResumeConstants.languageProficiencies
+            // Languages — data from resume.json
             RevealOnScroll(
               child: Container(
                 key: _sectionKeys['languages'],
@@ -294,41 +425,45 @@ class _ResumePageState extends State<ResumePage>
                   title: 'Languages',
                   icon: Icons.language_rounded,
                   accentColor: accentColor,
-                  content: LanguageProficiencyWidget(
-                    languages: ResumeConstants.languageProficiencies
-                        .map(
-                          (lp) => LanguageProficiency(
-                            language: lp['language'] as String,
-                            flagCode: lp['flagCode'] as String,
-                            readingLevel:
-                                (lp['readingLevel'] as num).toDouble(),
-                            writingLevel:
-                                (lp['writingLevel'] as num).toDouble(),
-                            speakingLevel:
-                                (lp['speakingLevel'] as num).toDouble(),
-                            listeningLevel:
-                                (lp['listeningLevel'] as num).toDouble(),
-                            certification: lp['certification'] as String?,
+                  content: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      for (final lang in Resume.I.languageEntries)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Icon(Icons.translate_rounded,
+                                  size: 18, color: AppTheme.primaryColor),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  '${lang.language} — ${lang.level}',
+                                  style: const TextStyle(
+                                      fontSize: 15, height: 1.5),
+                                ),
+                              ),
+                            ],
                           ),
-                        )
-                        .toList(),
-                    accentColor: accentColor,
+                        ),
+                    ],
                   ),
                 ),
               ),
             ),
 
-            // Education — data from ResumeConstants.educationSummary
+            // Education — data from resume.json
             RevealOnScroll(
               child: Container(
                 key: _sectionKeys['education'],
-                child: const SectionCard(
+                child: SectionCard(
                   title: 'Education',
                   icon: Icons.school_rounded,
                   accentColor: accentColor,
                   content: Text(
-                    ResumeConstants.educationSummary,
-                    style: TextStyle(fontSize: 15, height: 1.65),
+                    Resume.I.educationSummary,
+                    style: const TextStyle(fontSize: 15, height: 1.65),
                   ),
                 ),
               ),
@@ -411,14 +546,13 @@ class _ResumePageState extends State<ResumePage>
             ],
           ),
         ),
-        for (int i = 0; i < ResumeConstants.experiences.length; i++)
+        for (int i = 0; i < Resume.I.experiences.length; i++)
           TimelineExperienceCard(
-            title: ResumeConstants.experiences[i].title,
-            role: ResumeConstants.experiences[i].role,
-            location: ResumeConstants.experiences[i].location,
-            period: ResumeConstants.experiences[i].period,
-            points: ResumeConstants.experiences[i].points,
-            notableProjects: ResumeConstants.experiences[i].notableProjects,
+            title: Resume.I.experiences[i].company,
+            role: Resume.I.experiences[i].role,
+            location: Resume.I.experiences[i].location,
+            period: Resume.I.experiences[i].periodLabel,
+            points: Resume.I.experiences[i].points,
             accentColor: AppTheme.primaryColor,
             isFirst: i == 0,
           ),

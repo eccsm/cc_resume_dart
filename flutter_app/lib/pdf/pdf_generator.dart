@@ -2,7 +2,7 @@ import 'dart:typed_data';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
-import 'resume_constants.dart';
+import '../models/resume.dart';
 
 class PdfGenerator {
   // Brand colors shared with the website theme
@@ -53,13 +53,13 @@ class PdfGenerator {
 
           // Work Experience
           _sectionHeader('Work Experience', sectionTitleStyle),
-          ...ResumeConstants.experiences.map((exp) => _buildExperienceEntryPaginated(
-                company: exp.title,
+          ...Resume.I.experiences.map((exp) => _buildExperienceEntryPaginated(
+                company: exp.company,
                 position: exp.role,
                 location: exp.location,
-                period: exp.period,
+                period: exp.periodLabel,
                 responsibilities: exp.points,
-                projects: exp.notableProjects,
+                projects: null,
                 companyStyle: companyNameStyle,
                 positionStyle: positionStyle,
                 locationStyle: locationPeriodStyle,
@@ -80,7 +80,7 @@ class PdfGenerator {
 
           // Languages
           _sectionHeader('Languages', sectionTitleStyle),
-          pw.Text(_ats(ResumeConstants.languages), style: normalStyle),
+          pw.Text(_ats(Resume.I.languages), style: normalStyle),
         ],
       ),
     );
@@ -129,31 +129,15 @@ class PdfGenerator {
 
   // ---------- Certificates (one-line per entry) ----------
   static pw.Widget _buildCertificatesOneLine(pw.TextStyle style) {
-    final lines = ResumeConstants.certificates
-        .split('\n')
-        .map((l) => l.trim())
-        .where((l) => l.isNotEmpty)
-        .toList();
-
-    final entries = <String>[];
-    for (int i = 0; i < lines.length; i++) {
-      final current = lines[i];
-      final next = (i + 1 < lines.length) ? lines[i + 1] : null;
-
-      if (next != null && !next.contains(' - ')) {
-        entries.add('$current ($next)');
-        i++;
-      } else {
-        entries.add(current);
-      }
-    }
-
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
-      children: entries
-          .map((e) => pw.Padding(
+      children: Resume.I.certifications
+          .map((c) => pw.Padding(
                 padding: const pw.EdgeInsets.only(bottom: 3),
-                child: pw.Text('• ${_ats(e)}', style: style),
+                child: pw.Text(
+                  '• ${_ats('${c.name} - ${c.year} (${c.issuer})')}',
+                  style: style,
+                ),
               ))
           .toList(),
     );
@@ -167,12 +151,15 @@ class PdfGenerator {
   ) {
     pw.Widget sep() => pw.Text(' | ', style: contactStyle);
 
+    final websiteLabel =
+        Resume.I.contactWebsite.replaceFirst(RegExp(r'^https?://'), '');
+
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.center,
       children: [
-        pw.Text(ResumeConstants.name, style: nameStyle),
+        pw.Text(Resume.I.name, style: nameStyle),
         pw.SizedBox(height: 5),
-        pw.Text(ResumeConstants.title, style: titleStyle),
+        pw.Text(Resume.I.title, style: titleStyle),
         pw.SizedBox(height: 6),
 
         // Contact row (Email | LinkedIn | GitHub)
@@ -180,17 +167,17 @@ class PdfGenerator {
           mainAxisAlignment: pw.MainAxisAlignment.center,
           children: [
             pw.UrlLink(
-              destination: 'mailto:${ResumeConstants.contactEmail}',
-              child: pw.Text(ResumeConstants.contactEmail, style: contactStyle),
+              destination: 'mailto:${Resume.I.contactEmail}',
+              child: pw.Text(Resume.I.contactEmail, style: contactStyle),
             ),
             sep(),
             pw.UrlLink(
-              destination: ResumeConstants.contactLinkedIn,
+              destination: Resume.I.contactLinkedIn,
               child: pw.Text('LinkedIn', style: contactStyle),
             ),
             sep(),
             pw.UrlLink(
-              destination: ResumeConstants.contactGitHub,
+              destination: Resume.I.contactGitHub,
               child: pw.Text('GitHub', style: contactStyle),
             ),
           ],
@@ -199,8 +186,8 @@ class PdfGenerator {
 
         // Website
         pw.UrlLink(
-          destination: 'https://ekincan.casim.net',
-          child: pw.Text('ekincan.casim.net', style: contactStyle),
+          destination: Resume.I.contactWebsite,
+          child: pw.Text(websiteLabel, style: contactStyle),
         ),
         pw.SizedBox(height: 2),
 
@@ -208,14 +195,13 @@ class PdfGenerator {
         pw.Row(
           mainAxisAlignment: pw.MainAxisAlignment.center,
           children: [
-            pw.Text(ResumeConstants.location, style: contactStyle),
-            if (ResumeConstants.contactPhone.isNotEmpty) ...[
+            pw.Text(Resume.I.location, style: contactStyle),
+            if (Resume.contactPhone.isNotEmpty) ...[
               sep(),
               pw.UrlLink(
                 destination:
-                    'tel:${ResumeConstants.contactPhone.replaceAll(' ', '')}',
-                child:
-                    pw.Text(ResumeConstants.contactPhone, style: contactStyle),
+                    'tel:${Resume.contactPhone.replaceAll(' ', '')}',
+                child: pw.Text(Resume.contactPhone, style: contactStyle),
               ),
             ],
           ],
@@ -226,7 +212,7 @@ class PdfGenerator {
 
   // ---------- Summary ----------
   static pw.Widget _buildSummary(pw.TextStyle style) {
-    return pw.Text(_ats(ResumeConstants.profileIntro), style: style);
+    return pw.Text(_ats(Resume.I.profileIntro), style: style);
   }
 
   // ---------- Experience (fallback pagination strategy) ----------
@@ -334,7 +320,7 @@ class PdfGenerator {
   /// Renders every category from ResumeConstants.skills as
   /// "**Category:** item, item, item" — the same structure the website uses.
   static pw.Widget _buildCoreSkills(pw.TextStyle style, pw.Font boldFont) {
-    final skillSections = ResumeConstants.skills.entries.map((entry) {
+    final skillSections = Resume.I.skills.entries.map((entry) {
       final items =
           entry.value.values.expand((skills) => skills).join(', ');
       if (items.isEmpty) return pw.SizedBox();
@@ -364,49 +350,23 @@ class PdfGenerator {
 
   // ---------- Education ----------
   static pw.Widget _buildEducation(pw.TextStyle style, pw.Font boldFont) {
-    final blocks = ResumeConstants.educationSummary
-        .split(RegExp(r'\n\s*\n'))
-        .map((s) => s.trim())
-        .where((s) => s.isNotEmpty)
-        .toList();
-
     final widgets = <pw.Widget>[];
 
-    for (final block in blocks) {
-      final lines = block.split('\n').map((l) => l.trim()).where((l) => l.isNotEmpty).toList();
-
-      String universityLine = lines.isNotEmpty ? lines.first : '';
-      String period = '';
-      String degreeLine = lines.length > 1 ? lines[1] : '';
-
-      final pipeIdx = universityLine.indexOf(' | ');
-      if (pipeIdx >= 0) {
-        period = universityLine.substring(pipeIdx + 3).trim();
-        universityLine = universityLine.substring(0, pipeIdx).trim();
-      }
-
-      if (degreeLine.isNotEmpty) {
-        // normalize common verbose phrasing a bit (optional)
-        degreeLine = degreeLine.replaceAll(RegExp(r'\s+'), ' ').trim();
-      }
-
+    for (final entry in Resume.I.education) {
       widgets.add(
         pw.Row(
           mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
             pw.Expanded(
-              child: pw.Text(_ats(universityLine),
+              child: pw.Text(_ats('${entry.institution}, ${entry.location}'),
                   style: style.copyWith(fontWeight: pw.FontWeight.bold)),
             ),
-            if (period.isNotEmpty) pw.Text(_ats(period), style: style),
+            pw.Text(_ats(entry.periodLabel), style: style),
           ],
         ),
       );
-
-      if (degreeLine.isNotEmpty) {
-        widgets.add(pw.Text(_ats(degreeLine), style: style));
-      }
+      widgets.add(pw.Text(_ats(entry.degree), style: style));
       widgets.add(pw.SizedBox(height: 6));
     }
 

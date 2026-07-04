@@ -1,11 +1,45 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../pdf/resume_constants.dart';
+import '../models/resume.dart';
 import '../theme/app_theme.dart';
 
+/// Per-issuer presentation only (badge asset, brand color, blurb about the
+/// certification program). The facts — name, issuer, year, url — come from
+/// resume.json.
+class _CertPresentation {
+  final String? assetPath;
+  final Color badgeColor;
+  final String blurb;
+
+  const _CertPresentation({
+    this.assetPath,
+    required this.badgeColor,
+    this.blurb = '',
+  });
+}
+
+const Map<String, _CertPresentation> _presentationByIssuer = {
+  'Cplace': _CertPresentation(
+    assetPath: 'assets/images/cplace.png',
+    badgeColor: Color(0xFF1A4B8C),
+    blurb:
+        'Designing, developing and deploying enterprise applications on the '
+        'cplace low-code platform using pro-code extension patterns.',
+  ),
+  'OutSystems': _CertPresentation(
+    assetPath: 'assets/images/outsystems.png',
+    badgeColor: Color(0xFFE64D1F),
+    blurb:
+        'Designing and developing scalable cloud applications on the '
+        'OutSystems Developer Cloud platform.',
+  ),
+};
+
+const _fallbackPresentation = _CertPresentation(badgeColor: Color(0xFFE8A33D));
+
 class CertificationCarouselWidget extends StatefulWidget {
-  final List<Map<String, dynamic>>? certifications;
-  const CertificationCarouselWidget({super.key, this.certifications});
+  final List<Certification> certifications;
+  const CertificationCarouselWidget({super.key, required this.certifications});
 
   @override
   State<CertificationCarouselWidget> createState() =>
@@ -16,16 +50,11 @@ class _CertificationCarouselWidgetState
     extends State<CertificationCarouselWidget> {
   late final PageController _ctrl;
   int _page = 0;
-  late final List<Map<String, dynamic>> _items;
+  late final List<Certification> _items = widget.certifications;
 
   @override
   void initState() {
     super.initState();
-    // Use provided certifications (from ResumeConstants) — no more hardcoded _defaultCerts
-    _items = widget.certifications ??
-        ResumeConstants.certifications
-            .map((c) => Map<String, dynamic>.from(c))
-            .toList();
     _ctrl = PageController(viewportFraction: 0.88);
   }
 
@@ -86,8 +115,10 @@ class _CertificationCarouselWidgetState
                 itemCount: _items.length,
                 itemBuilder: (c, i) {
                   final cert = _items[i];
+                  final pres =
+                      _presentationByIssuer[cert.issuer] ?? _fallbackPresentation;
                   final focus = i == _page;
-                  final badgeColor = cert['badgeColor'] as Color;
+                  final badgeColor = pres.badgeColor;
 
                   return AnimatedContainer(
                     duration: const Duration(milliseconds: 350),
@@ -119,7 +150,7 @@ class _CertificationCarouselWidgetState
                     ),
                     child: InkWell(
                       borderRadius: BorderRadius.circular(16),
-                      onTap: () => _open(cert['url']),
+                      onTap: () => _open(cert.url),
                       child: Padding(
                         padding: EdgeInsets.all(narrow ? 14 : 20),
                         child: LayoutBuilder(
@@ -131,21 +162,27 @@ class _CertificationCarouselWidgetState
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               padding: EdgeInsets.all(compact ? 8 : 10),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(6),
-                                child: Image.asset(
-                                  cert['assetPath'],
-                                  width: compact ? 22 : 28,
-                                  height: compact ? 22 : 28,
-                                ),
-                              ),
+                              child: pres.assetPath == null
+                                  ? Icon(
+                                      Icons.workspace_premium_rounded,
+                                      size: compact ? 22 : 28,
+                                      color: badgeColor,
+                                    )
+                                  : ClipRRect(
+                                      borderRadius: BorderRadius.circular(6),
+                                      child: Image.asset(
+                                        pres.assetPath!,
+                                        width: compact ? 22 : 28,
+                                        height: compact ? 22 : 28,
+                                      ),
+                                    ),
                             );
 
                             final titleBlock = Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  cert['name'],
+                                  cert.name,
                                   maxLines: compact ? 3 : 2,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
@@ -157,7 +194,7 @@ class _CertificationCarouselWidgetState
                                 ),
                                 const SizedBox(height: 3),
                                 Text(
-                                  cert['issuer'],
+                                  cert.issuer,
                                   maxLines: compact ? 2 : 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
@@ -216,7 +253,7 @@ class _CertificationCarouselWidgetState
                                 SizedBox(height: compact ? 12 : 14),
                                 Expanded(
                                   child: Text(
-                                    cert['description'],
+                                    pres.blurb,
                                     maxLines: compact ? 6 : null,
                                     overflow: compact
                                         ? TextOverflow.ellipsis
@@ -235,7 +272,7 @@ class _CertificationCarouselWidgetState
                                             CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            cert['date'],
+                                            'Issued ${cert.year}',
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
                                             style: TextStyle(
@@ -253,7 +290,7 @@ class _CertificationCarouselWidgetState
                                         children: [
                                           Expanded(
                                             child: Text(
-                                              cert['date'],
+                                              'Issued ${cert.year}',
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
                                               style: TextStyle(

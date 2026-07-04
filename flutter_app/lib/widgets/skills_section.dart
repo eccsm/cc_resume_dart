@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:cc_resume_app/pdf/resume_constants.dart';
+import 'package:cc_resume_app/models/resume.dart';
 import '../theme/app_theme.dart';
 import 'section_card.dart';
 
@@ -31,7 +31,7 @@ class SkillsSection extends StatelessWidget {
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          for (var categoryEntry in ResumeConstants.skills.entries)
+          for (var categoryEntry in Resume.I.skills.entries)
             _buildCategorySection(
               context,
               categoryEntry.key,

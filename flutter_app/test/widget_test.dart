@@ -1,25 +1,46 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:cc_resume_app/data/resume_knowledge.dart';
-import 'package:cc_resume_app/pdf/resume_constants.dart';
+import 'package:cc_resume_app/models/resume.dart';
 
 void main() {
-  group('ResumeConstants', () {
-    test('every experience has a non-empty period', () {
-      for (final exp in ResumeConstants.experiences) {
-        expect(exp.period, isNotEmpty, reason: '${exp.title} missing period');
-        expect(exp.location, isNot(contains('|')),
-            reason: '${exp.title} location still contains the period');
+  setUpAll(() {
+    // Parse the same resume.json the deployed app fetches. Emit it first:
+    //   cd ../site && node scripts/emit-resume-json.mjs
+    final file = File('../site/public/data/resume.json');
+    expect(file.existsSync(), isTrue,
+        reason: 'resume.json missing — run site/scripts/emit-resume-json.mjs');
+    Resume.current = Resume.fromJson(
+        jsonDecode(file.readAsStringSync()) as Map<String, dynamic>);
+  });
+
+  group('Resume model', () {
+    test('parses all experiences with non-empty periods', () {
+      expect(Resume.I.experiences, isNotEmpty);
+      for (final exp in Resume.I.experiences) {
+        expect(exp.periodLabel, isNotEmpty,
+            reason: '${exp.company} missing period');
+        expect(exp.points, isNotEmpty, reason: '${exp.company} has no points');
       }
+    });
+
+    test('composed getters produce content', () {
+      expect(Resume.I.educationSummary, contains('|'));
+      expect(Resume.I.languages, contains('Turkish'));
+      expect(Resume.I.certificates, isNotEmpty);
+      expect(Resume.I.skills, isNotEmpty);
     });
   });
 
   group('ResumeKnowledge', () {
     test('system prompt is grounded in resume facts', () {
       final prompt = ResumeKnowledge.buildSystemPrompt();
-      expect(prompt, contains(ResumeConstants.name));
+      expect(prompt, contains(Resume.I.name));
       expect(prompt, contains('Medisa'));
-      expect(prompt, contains(ResumeConstants.contactEmail));
+      expect(prompt, contains(Resume.I.contactEmail));
     });
 
     test('system prompt includes pinned repos when provided', () {

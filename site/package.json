@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "astro dev",
-    "prebuild": "node scripts/generate-og.mjs",
+    "prebuild": "node scripts/generate-og.mjs && node scripts/emit-resume-json.mjs",
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro"

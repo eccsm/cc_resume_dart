@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../pdf/resume_constants.dart';
+import '../models/resume.dart';
 import '../theme/app_theme.dart';
 import 'social_icons_row.dart';
 
@@ -30,12 +30,13 @@ class HeroSection extends StatefulWidget {
 }
 
 class _HeroSectionState extends State<HeroSection> {
-  static const List<String> _roles = [
-    'Software Architect',
-    'Senior Java Engineer',
-    'Event-Driven Systems Designer',
-    'AI & LLM Integrator',
-  ];
+  // Rotating role line, derived from the resume.json title
+  // ("Software Architect & Senior Java Engineer" -> two entries).
+  late final List<String> _roles = Resume.I.title
+      .split(RegExp(r'\s*&\s*'))
+      .map((r) => r.trim())
+      .where((r) => r.isNotEmpty)
+      .toList();
 
   int _roleIndex = 0;
   Timer? _timer;
@@ -115,7 +116,7 @@ class _HeroSectionState extends State<HeroSection> {
               stops: const [0.55, 1.0],
             ).createShader(bounds),
             child: Text(
-              ResumeConstants.name,
+              Resume.I.name,
               style: GoogleFonts.inter(
                 fontSize: isNarrow ? 36 : 52,
                 fontWeight: FontWeight.w800,
@@ -166,13 +167,11 @@ class _HeroSectionState extends State<HeroSection> {
           ),
           const SizedBox(height: 18),
 
-          // One-line pitch
+          // One-line pitch — resume.json tagline
           ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 640),
             child: Text(
-              '10+ years building enterprise platforms in insurance, banking '
-              'and retail — from Kafka-backed microservices to '
-              'GenAI-powered chatbots.',
+              Resume.I.tagline,
               style: GoogleFonts.inter(
                 fontSize: isNarrow ? 14 : 16,
                 height: 1.6,

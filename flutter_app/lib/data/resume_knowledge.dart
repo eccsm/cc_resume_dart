@@ -1,10 +1,11 @@
 // lib/data/resume_knowledge.dart
 //
 // Single source of truth for everything the chatbot knows.
-// Both the keyword fallback and the WebLLM system prompt are built from
-// ResumeConstants, so resume facts only ever need updating in one place.
+// Both the keyword fallback and the WebLLM system prompt are built from the
+// fetched resume.json (Resume.I), so resume facts only ever need updating in
+// site/src/data/resume.ts.
 
-import '../pdf/resume_constants.dart';
+import '../models/resume.dart';
 
 /// A suggested question rendered as a tappable chip in the chat UI.
 class SuggestedQuestion {
@@ -26,20 +27,20 @@ class ResumeKnowledge {
   static String buildSystemPrompt({List<String> pinnedRepos = const []}) {
     final buffer = StringBuffer()
       ..writeln(
-          'You are the AI assistant on the resume website of ${ResumeConstants.name} '
-          '(${ResumeConstants.title}, based in ${ResumeConstants.location}).')
+          'You are the AI assistant on the resume website of ${Resume.I.name} '
+          '(${Resume.I.title}, based in ${Resume.I.location}).')
       ..writeln('Answer questions about his professional background concisely '
           '(2-4 sentences), in a friendly, professional tone. Only use the '
           'facts below; if you are asked something not covered here, say so '
           'and suggest a related topic you can answer.')
       ..writeln()
       ..writeln('## Summary')
-      ..writeln(ResumeConstants.profileIntro)
+      ..writeln(Resume.I.profileIntro)
       ..writeln()
       ..writeln('## Experience');
 
-    for (final exp in ResumeConstants.experiences) {
-      buffer.writeln('- ${exp.role} at ${exp.title} (${exp.period}, '
+    for (final exp in Resume.I.experiences) {
+      buffer.writeln('- ${exp.role} at ${exp.company} (${exp.periodLabel}, '
           '${exp.location}): ${exp.points.first}');
     }
 
@@ -49,18 +50,18 @@ class ResumeKnowledge {
       ..writeln(_skillsOneLiner())
       ..writeln()
       ..writeln('## Education')
-      ..writeln(ResumeConstants.educationSummary.replaceAll('\n', ' '))
+      ..writeln(Resume.I.educationSummary.replaceAll('\n', ' '))
       ..writeln()
       ..writeln('## Certifications')
-      ..writeln(ResumeConstants.certificates.replaceAll('\n', '; '))
+      ..writeln(Resume.I.certificates.replaceAll('\n', '; '))
       ..writeln()
       ..writeln('## Languages')
-      ..writeln(ResumeConstants.languages)
+      ..writeln(Resume.I.languages)
       ..writeln()
       ..writeln('## Contact')
-      ..writeln('Email: ${ResumeConstants.contactEmail} | '
-          'LinkedIn: ${ResumeConstants.contactLinkedIn} | '
-          'GitHub: ${ResumeConstants.contactGitHub}');
+      ..writeln('Email: ${Resume.I.contactEmail} | '
+          'LinkedIn: ${Resume.I.contactLinkedIn} | '
+          'GitHub: ${Resume.I.contactGitHub}');
 
     if (pinnedRepos.isNotEmpty) {
       buffer
@@ -76,7 +77,7 @@ class ResumeKnowledge {
 
   static String _skillsOneLiner() {
     final parts = <String>[];
-    ResumeConstants.skills.forEach((category, subcats) {
+    Resume.I.skills.forEach((category, subcats) {
       final items = subcats.values.expand((v) => v).take(6).join(', ');
       parts.add('$category: $items');
     });
@@ -225,10 +226,10 @@ class ResumeKnowledge {
         q.contains('hire') ||
         q.contains('contact') ||
         q.contains('email')) {
-      return 'Ekincan is based in ${ResumeConstants.location} and is open to '
+      return 'Ekincan is based in ${Resume.I.location} and is open to '
           'senior architect and tech lead opportunities. You can reach him at '
-          '${ResumeConstants.contactEmail} or via LinkedIn at '
-          '${ResumeConstants.contactLinkedIn}.';
+          '${Resume.I.contactEmail} or via LinkedIn at '
+          '${Resume.I.contactLinkedIn}.';
     }
 
     if (q.contains('educat') ||
@@ -242,7 +243,7 @@ class ResumeKnowledge {
     }
 
     if (q.contains('certif')) {
-      return 'Certifications: ${ResumeConstants.certificates.replaceAll('\n', ' and ')}.';
+      return 'Certifications: ${Resume.I.certificates.replaceAll('\n', ' and ')}.';
     }
 
     return "I'm Ekincan's resume assistant. You can ask me about his "
@@ -253,8 +254,8 @@ class ResumeKnowledge {
 
   static String _experienceSummary() {
     final buffer = StringBuffer('Ekincan has 10+ years of experience: ');
-    final entries = ResumeConstants.experiences
-        .map((e) => '${e.role} at ${e.title} (${e.period})')
+    final entries = Resume.I.experiences
+        .map((e) => '${e.role} at ${e.company} (${e.periodLabel})')
         .toList();
     buffer.write(entries.join(', '));
     buffer.write('.');

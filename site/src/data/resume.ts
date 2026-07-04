@@ -340,6 +340,17 @@ export const contact: Contact = {
   website: 'https://casim.net',
 };
 
+/** Self-assessed depth per area (0-10) for the Flutter radar chart. */
+export const skillLevels: { name: string; value: number }[] = [
+  { name: 'Java / Spring Boot', value: 9.5 },
+  { name: 'Cloud & DevOps', value: 8.5 },
+  { name: 'System Architecture', value: 8.5 },
+  { name: 'Databases', value: 8.0 },
+  { name: 'Event-Driven (Kafka)', value: 8.0 },
+  { name: 'Frontend (React/Angular)', value: 6.5 },
+  { name: 'ML / LLM Integration', value: 6.5 },
+];
+
 /** Flat skill list for JSON-LD knowsAbout and the og-image. */
 export const knowsAbout: string[] = [
   'Java',

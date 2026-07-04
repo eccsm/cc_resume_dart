@@ -1,7 +1,7 @@
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import '../pdf/resume_constants.dart';
+import '../models/resume.dart';
 
 class SocialIconsRow extends StatelessWidget {
   final bool includePdfExport;
@@ -38,21 +38,21 @@ class SocialIconsRow extends StatelessWidget {
         iconColor: const Color(0xFF0A66C2),
         size: effectiveIconSize,
         tooltip: 'LinkedIn',
-        onPressed: () => _launchLink(ResumeConstants.contactLinkedIn),
+        onPressed: () => _launchLink(Resume.I.contactLinkedIn),
       ),
       _SocialIconButton(
         icon: FontAwesomeIcons.github,
         iconColor: isDark ? Colors.white : const Color(0xFF24292E),
         size: effectiveIconSize,
         tooltip: 'GitHub',
-        onPressed: () => _launchLink(ResumeConstants.contactGitHub),
+        onPressed: () => _launchLink(Resume.I.contactGitHub),
       ),
       _SocialIconButton(
         icon: FontAwesomeIcons.envelope,
         iconColor: const Color(0xFFEA4335),
         size: effectiveIconSize,
         tooltip: 'Email',
-        onPressed: () => _launchLink("mailto:${ResumeConstants.contactEmail}"),
+        onPressed: () => _launchLink("mailto:${Resume.I.contactEmail}"),
       ),
       if (includePdfExport)
         _SocialIconButton(

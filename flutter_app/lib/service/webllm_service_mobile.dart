@@ -2,7 +2,7 @@
 //
 // Mobile/desktop implementation, compiled when dart.library.io is available.
 // WebLLM only runs in browsers, so this always answers from the keyword
-// fallback grounded in ResumeConstants.
+// fallback grounded in the fetched resume.json.
 
 import 'dart:async';
 

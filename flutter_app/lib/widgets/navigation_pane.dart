@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../pdf/resume_constants.dart';
+import '../models/resume.dart';
 import '../theme/app_theme.dart';
 import 'profile_picture.dart';
 import 'social_icons_row.dart';
@@ -186,13 +186,13 @@ class _NavigationPaneState extends State<NavigationPane> {
 
         const SizedBox(height: 20),
 
-        // Name & Title from ResumeConstants
+        // Name & Title from resume.json
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Column(
             children: [
               Text(
-                ResumeConstants.name,
+                Resume.I.name,
                 style: TextStyle(
                   color: nameColor,
                   fontSize: 20,
@@ -203,7 +203,7 @@ class _NavigationPaneState extends State<NavigationPane> {
               ),
               const SizedBox(height: 6),
               Text(
-                ResumeConstants.title,
+                Resume.I.title,
                 style: TextStyle(
                   color: titleColor,
                   fontSize: 13,
@@ -230,7 +230,7 @@ class _NavigationPaneState extends State<NavigationPane> {
                         size: 12, color: locationIconColor),
                     const SizedBox(width: 4),
                     Text(
-                      ResumeConstants.location,
+                      Resume.I.location,
                       style: TextStyle(
                         color: locationTextColor,
                         fontSize: 11,
