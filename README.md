@@ -1,124 +1,45 @@
-# cc_resume_app
+# casim.net — portfolio monorepo
 
-A Flutter application that presents a digital resume for Ekincan Casim, showcasing professional experience, skills, education, and contact information in a clean, interactive UI with chatbot functionality.
+One repo, one deployment. The Astro site is the shell served at
+[casim.net](https://casim.net); the Flutter app is embedded in it as a
+lazy-loaded "interactive mode" overlay.
 
-## Overview
+## Layout
 
-**cc_resume_app** is a cross-platform Flutter app that displays your resume in a modern, mobile-friendly format. It uses resume constants for the content, and includes support for dynamic theming, asset management, animations, and Firebase integration for web hosting and analytics.
+| Path | What it is |
+|---|---|
+| [`site/`](site/README.md) | Astro static site — the deployed artifact (`site/dist`). Semantic HTML resume, design tokens, JSON-LD/OG/sitemap, chat widget. |
+| [`flutter_app/`](flutter_app/README.md) | Flutter Web app, built into `site/public/assets/flutter/` and booted on demand as a multi-view island. |
+| [`worker/`](worker/README.md) | Cloudflare Worker: `/ask` (Claude chat), `/tts` (ElevenLabs), `/health`. |
+| [`analytics/`](analytics/README.md) | Self-hosted Umami (docker-compose) for stats.casim.net. |
+| `scripts/` | Root build pipeline (see below). |
 
-## Features
+## Single source of truth
 
-- **Clean, Interactive UI:**  
-  Present your resume details using a drag-and-drop, responsive layout with animated elements.
-  
-- **Chatbot Integration:**  
-  Interactive chat widget for visitors to engage with your digital resume.
+All resume content lives in
+[`site/src/data/resume.ts`](site/src/data/resume.ts):
 
-- **Modular Architecture:**  
-  Separates UI widgets from static content, making it easy to update or extend.
+- the Astro pages render it directly,
+- `site/scripts/emit-resume-json.mjs` emits `site/public/data/resume.json`
+  (build step), which the Flutter app fetches at runtime,
+- the chat worker's system prompt is generated from it at deploy time.
 
-- **Firebase Integration:**  
-  Web hosting, analytics, and performance monitoring to track visitor engagement.
+Edit content there and nowhere else. No PII — this repo is public.
 
-- **PDF Generation:**  
-  Ability to generate a downloadable PDF version of the resume.
+## Building
 
-- **Asset Management:**  
-  Custom fonts, images, and icons for a personalized experience.
-
-## Getting Started
-
-### Prerequisites
-
-- [Flutter SDK](https://flutter.dev/docs/get-started/install) (latest stable release recommended)
-- [Dart SDK](https://dart.dev/get-dart) (comes with Flutter)
-- [Firebase Account](https://firebase.google.com/) (for web hosting and analytics)
-- A code editor (e.g., VS Code, Android Studio)
-
-### Installation
-
-1. **Clone the Repository:**
-
-   ```bash
-   git clone https://github.com/eccsm/cc_resume_app.git
-   cd cc_resume_app
-   ```
-2. **Install Dependencies:**
-
-    Run the following command in the project directory:
-
-    ```bash
-    flutter pub get
-    ```
-3. **Set Up Firebase (Optional):**
-
-    Firebase is only used for web hosting (see `firebase.json` and
-    `.github/workflows/`). The app itself needs no Firebase configuration
-    or environment files — see [SETUP.md](SETUP.md).
-
-4. **Run the App:**
-
-    Use the following command to run the app on your connected device or emulator:
-
-    ```bash
-    flutter run
-    ```
-   
-## Project Structure
-```
-cc_resume_app/
-├── android/            # Android-specific code
-├── ios/                # iOS-specific code
-├── web/                # Web-specific code
-├── assets/
-│   ├── images/         # Images and icons
-│   └── fonts/          # Custom fonts
-├── lib/
-│   ├── main.dart              # App entry point
-│   ├── data/                  # Chatbot knowledge (built from resume constants)
-│   ├── pdf/                   # PDF generation + resume content (resume_constants.dart)
-│   ├── service/               # WebLLM chat service (web/mobile implementations)
-│   ├── theme/                 # Design system
-│   └── widgets/               # UI widgets (hero, chat, bento repo grid, ...)
-├── test/               # Unit and widget tests
-├── pubspec.yaml        # Dependency and asset configuration
-└── README.md           # This file
+```sh
+node scripts/build.mjs        # flutter build web → copy into site/public → astro build
 ```
 
-## Usage
+Produces the deployable `site/dist/`. Requires Flutter and Node 20+.
+For site-only iteration (no Flutter island): `cd site && npm run build`.
 
-- **Viewing the Resume:**
-    Launch the app to see the digital resume. Navigate through sections to explore professional details.
+## CI
 
-- **Interacting with the Chatbot:**
-    Use the draggable chat widget to ask questions about the resume.
-
-- **Updating Content:**
-    Update the static content in lib/resume_constants.dart or create a separate configuration file.
-
-- **Deploying to Web:**
-    Deploy to Firebase Hosting with:
-    ```bash
-    flutter build web --release --web-renderer canvaskit
-    firebase deploy
-    ```
-
-## Features in Detail
-
-### Responsive Design
-The app uses responsive_framework and flutter_screenutil to ensure optimal display across different device sizes.
-
-### Animations
-Implemented with animated_text_kit for engaging text transitions and custom animations for UI elements.
-
-### Firebase Integration
-Analytics, performance monitoring, and hosting capabilities through Firebase services.
-
-## Contributing
-Feel free to fork this repository and submit pull requests. For major changes, please open an issue first to discuss what you would like to change.
-
-## License
-This project is licensed under the MIT License.
-
-## Contact
-For any questions or further information, please reach out via LinkedIn or GitHub.
+- `.github/workflows/firebase-hosting-merge.yml` — full pipeline + deploy on
+  merge to master (Firebase Hosting, project `resume-63067`).
+- `.github/workflows/firebase-hosting-pull-request.yml` — PR preview channel.
+- `.github/workflows/lighthouse-ci.yml` — perf/SEO/a11y/JS budgets on the
+  static shell (Flutter assets are behind a user gesture and don't count).
+- `.github/workflows/uptime.yml` — chat backend `/health` probe.

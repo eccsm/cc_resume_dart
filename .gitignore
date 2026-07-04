@@ -1,82 +1,27 @@
-# Miscellaneous
-*.class
-*.log
-*.pyc
-*.swp
+# Repo-wide rules only — project-specific rules live in each project's own
+# .gitignore (flutter_app/, site/, worker/).
+
+# OS / editor junk
 .DS_Store
-.atom/
-.buildlog/
-.history
-.svn/
-migrate_working_dir/
-
-# IntelliJ related
-*.iml
-*.ipr
-*.iws
+Thumbs.db
+*.swp
 .idea/
-
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
 .vscode/
+*.iml
 
-# Flutter/Dart/Pub related
-**/doc/api/
-**/ios/Flutter/.last_build_id
-.dart_tool/
-.flutter-plugins
-.flutter-plugins-dependencies
-.pub-cache/
-.pub/
-/build/
+# Logs
+*.log
 
-# Symbolication related
-app.*.symbols
+# Node
+node_modules/
 
-# Obfuscation related
-app.*.map.json
-
-# Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
-
-# Firebase files
-firebase-debug.log
+# Firebase local artifacts
 .firebase/
+firebase-debug.log
 firebase-debug.*.log
 
-# Security and environment configurations
+# Secrets / env files (examples stay tracked)
 .env
 .env.*
 *.env
-google-services.json
-GoogleService-Info.plist
-key.jks
-key.properties
-upload-keystore.jks
-secrets.json
-**/*/res/values/secrets.xml
-
-# Sensitive resume data
-lib/resume_constants_private.dart
-
-# Local configurations
-lib/config.local.dart
-
-# Generated files
-lib/generated/
-lib/firebase_options.dart
-
-# Web related
-web/firebase-config.js
-
-# Coverage reports
-coverage/
-.coverage/
-htmlcov/
-.test-results/
-
-# Node (WebLLM bundling tooling)
-node_modules/
+!.env.example
