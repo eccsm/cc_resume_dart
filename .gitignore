@@ -77,3 +77,6 @@ coverage/
 .coverage/
 htmlcov/
 .test-results/
+
+# Node (WebLLM bundling tooling)
+node_modules/

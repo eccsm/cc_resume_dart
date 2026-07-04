@@ -7,110 +7,86 @@ import 'resume_constants.dart';
 class PdfGenerator {
   static Future<Uint8List> generateResumePdf() async {
     final pdf = pw.Document();
-    
+
     // Load fonts
     final font = await PdfGoogleFonts.openSansRegular();
     final boldFont = await PdfGoogleFonts.openSansBold();
-    
+
     // Define styles
-    final headerNameStyle = pw.TextStyle(
-      font: boldFont,
-      fontSize: 24,
-      color: PdfColors.black,
-    );
-    
-    final headerTitleStyle = pw.TextStyle(
-      font: boldFont,
-      fontSize: 16,
-      color: PdfColors.black,
-    );
-    
-    final headerContactStyle = pw.TextStyle(
-      font: font,
-      fontSize: 11,
-      color: PdfColors.black,
-    );
-    
-    final sectionTitleStyle = pw.TextStyle(
-      font: boldFont,
-      fontSize: 14,
-      color: PdfColors.black,
-    );
-    
-    final companyNameStyle = pw.TextStyle(
-      font: boldFont,
-      fontSize: 12,
-      color: PdfColors.black,
-    );
-    
-    final positionStyle = pw.TextStyle(
-      font: boldFont,
-      fontSize: 12,
-      color: PdfColors.black,
-    );
-    
-    final normalStyle = pw.TextStyle(
-      font: font,
-      fontSize: 11,
-      color: PdfColors.black,
-    );
-    
-    final locationPeriodStyle = pw.TextStyle(
-      font: font,
-      fontSize: 11,
-      color: PdfColors.black,
-    );
-    
-    // Add pages to the PDF
+    final headerNameStyle = pw.TextStyle(font: boldFont, fontSize: 24, color: PdfColors.black);
+    final headerTitleStyle = pw.TextStyle(font: boldFont, fontSize: 16, color: PdfColors.black);
+    final headerContactStyle = pw.TextStyle(font: font, fontSize: 11, color: PdfColors.black);
+
+    final sectionTitleStyle = pw.TextStyle(font: boldFont, fontSize: 14, color: PdfColors.black);
+    final companyNameStyle = pw.TextStyle(font: boldFont, fontSize: 12, color: PdfColors.black);
+    final positionStyle = pw.TextStyle(font: boldFont, fontSize: 12, color: PdfColors.black);
+    final normalStyle = pw.TextStyle(font: font, fontSize: 11, color: PdfColors.black);
+    final locationPeriodStyle = pw.TextStyle(font: font, fontSize: 11, color: PdfColors.black);
+
     pdf.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.all(40),
+        header: (context) {
+          // No header on page 1 to avoid duplication with hero header
+          if (context.pageNumber == 1) return pw.SizedBox();
+          return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.center,
+            children: [
+              pw.Text(ResumeConstants.name, style: headerNameStyle.copyWith(fontSize: 18)),
+              pw.SizedBox(height: 2),
+              pw.Text(ResumeConstants.title, style: headerTitleStyle.copyWith(fontSize: 12)),
+              pw.SizedBox(height: 8),
+              pw.Divider(thickness: 1, color: PdfColors.grey500),
+            ],
+          );
+        },
+        footer: (context) => pw.Row(
+          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+          children: [
+            pw.Text('Ekincan Casim – Resume', style: normalStyle.copyWith(color: PdfColors.grey700)),
+            pw.Text('Page ${context.pageNumber} of ${context.pagesCount}',
+                style: normalStyle.copyWith(color: PdfColors.grey700)),
+          ],
+        ),
         build: (context) => [
-          // Header section
-          _buildHeader(
-            headerNameStyle, 
-            headerTitleStyle, 
-            headerContactStyle
-          ),
-          pw.SizedBox(height: 20),
-          
+          // Hero header (page 1)
+          _buildHeader(headerNameStyle, headerTitleStyle, headerContactStyle),
+          _vSpace(12),
+
           // Professional Summary
+          _sectionHeader('Professional Summary', sectionTitleStyle),
           _buildSummary(normalStyle),
-          pw.SizedBox(height: 20),
-          
+          _divider(),
+
           // Work Experience
-          pw.Text('Work Experience', style: sectionTitleStyle),
-          pw.SizedBox(height: 10),
-          
-          // Experience entries
-          ...ResumeConstants.experiences.map((exp) => _buildExperienceEntry(
-            company: exp.title,
-            position: exp.role,
-            location: exp.location,
-            period: _extractPeriod(exp.location),
-            responsibilities: exp.points,
-            projects: exp.notableProjects,
-            companyStyle: companyNameStyle,
-            positionStyle: positionStyle,
-            locationStyle: locationPeriodStyle,
-            bodyStyle: normalStyle,
-          )),
-          
-          // Core Skills
-          pw.SizedBox(height: 10),
-          pw.Text('Core Skills', style: sectionTitleStyle),
-          pw.SizedBox(height: 5),
+          _sectionHeader('Work Experience', sectionTitleStyle),
+          ...ResumeConstants.experiences.map((exp) => _buildExperienceEntryPaginated(
+                company: exp.title,
+                position: exp.role,
+                location: exp.location,
+                period: exp.period,
+                responsibilities: exp.points,
+                projects: exp.notableProjects,
+                companyStyle: companyNameStyle,
+                positionStyle: positionStyle,
+                locationStyle: locationPeriodStyle,
+                bodyStyle: normalStyle,
+              )),
+          _divider(),
+
+          // Core Skills 
+          _sectionHeader('Core Skills', sectionTitleStyle),
           _buildCoreSkills(normalStyle, boldFont),
-          
+          _divider(),
+
           // Education
-          pw.SizedBox(height: 10),
-          pw.Text('Education', style: sectionTitleStyle),
-          pw.SizedBox(height: 5),
+          _sectionHeader('Education', sectionTitleStyle),
           _buildEducation(normalStyle, boldFont),
-          
-          // Languages and Certificates
-          pw.SizedBox(height: 10),
+          _divider(),
+
+          // Languages & Certificates
+          _sectionHeader('Languages & Certificates', sectionTitleStyle),
           pw.Row(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
@@ -118,20 +94,20 @@ class PdfGenerator {
                 child: pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
-                    pw.Text('Languages', style: sectionTitleStyle),
-                    pw.SizedBox(height: 5),
+                    pw.Text('Languages', style: companyNameStyle),
+                    _vSpace(4),
                     pw.Text(ResumeConstants.languages, style: normalStyle),
                   ],
                 ),
               ),
-              pw.SizedBox(width: 40),
+              pw.SizedBox(width: 32),
               pw.Expanded(
                 child: pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
-                    pw.Text('Certificates', style: sectionTitleStyle),
-                    pw.SizedBox(height: 5),
-                    _buildCertificates(normalStyle),
+                    pw.Text('Certificates', style: companyNameStyle),
+                    _vSpace(4),
+                    _buildCertificatesOneLine(normalStyle),
                   ],
                 ),
               ),
@@ -140,62 +116,128 @@ class PdfGenerator {
         ],
       ),
     );
-    
+
     return pdf.save();
   }
-  
+
+  // ---------- Helpers ----------
+  static pw.Widget _sectionHeader(String title, pw.TextStyle style) =>
+      pw.Padding(padding: const pw.EdgeInsets.only(bottom: 6), child: pw.Text(title, style: style));
+
+  static pw.Widget _divider() =>
+      pw.Padding(padding: const pw.EdgeInsets.symmetric(vertical: 10), child: pw.Divider(thickness: 1, color: PdfColors.grey500));
+
+  static pw.SizedBox _vSpace(double h) => pw.SizedBox(height: h);
+
+  static List<List<T>> _chunk<T>(List<T> items, int size) {
+    if (size <= 0 || items.isEmpty) return [items];
+    final chunks = <List<T>>[];
+    for (var i = 0; i < items.length; i += size) {
+      chunks.add(items.sublist(i, i + size > items.length ? items.length : i + size));
+    }
+    return chunks;
+  }
+
+  // ---------- Certificates (one-line per entry) ----------
+  static pw.Widget _buildCertificatesOneLine(pw.TextStyle style) {
+    final lines = ResumeConstants.certificates
+        .split('\n')
+        .map((l) => l.trim())
+        .where((l) => l.isNotEmpty)
+        .toList();
+
+    final entries = <String>[];
+    for (int i = 0; i < lines.length; i++) {
+      final current = lines[i];
+      final next = (i + 1 < lines.length) ? lines[i + 1] : null;
+
+      if (next != null && !next.contains(' - ')) {
+        entries.add('$current ($next)');
+        i++;
+      } else {
+        entries.add(current);
+      }
+    }
+
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: entries
+          .map((e) => pw.Padding(
+                padding: const pw.EdgeInsets.only(bottom: 3),
+                child: pw.Text('• $e', style: style),
+              ))
+          .toList(),
+    );
+  }
+
+  // ---------- Header (hero) with clickable links ----------
   static pw.Widget _buildHeader(
     pw.TextStyle nameStyle,
     pw.TextStyle titleStyle,
-    pw.TextStyle contactStyle
+    pw.TextStyle contactStyle,
   ) {
+    pw.Widget sep() => pw.Text(' | ', style: contactStyle);
+
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.center,
       children: [
-        // Name
         pw.Text(ResumeConstants.name, style: nameStyle),
         pw.SizedBox(height: 5),
-        
-        // Title
         pw.Text(ResumeConstants.title, style: titleStyle),
-        pw.SizedBox(height: 5),
-        
-        // Contact information in a row
+        pw.SizedBox(height: 6),
+
+        // Contact row (Email | LinkedIn | GitHub)
         pw.Row(
           mainAxisAlignment: pw.MainAxisAlignment.center,
           children: [
-            pw.Text(ResumeConstants.contactEmail, style: contactStyle),
-            pw.Text(' | ', style: contactStyle),
-            pw.Text('LinkedIn', style: contactStyle),
+            pw.UrlLink(
+              destination: 'mailto:${ResumeConstants.contactEmail}',
+              child: pw.Text(ResumeConstants.contactEmail, style: contactStyle),
+            ),
+            sep(),
+            pw.UrlLink(
+              destination: ResumeConstants.contactLinkedIn,
+              child: pw.Text('LinkedIn', style: contactStyle),
+            ),
+            sep(),
+            pw.UrlLink(
+              destination: ResumeConstants.contactGitHub,
+              child: pw.Text('GitHub', style: contactStyle),
+            ),
           ],
         ),
-        pw.SizedBox(height: 2),
-        
+        pw.SizedBox(height: 4),
+
         // Website
-        pw.Text('ekincan.casim.net', style: contactStyle),
+        pw.UrlLink(
+          destination: 'https://ekincan.casim.net',
+          child: pw.Text('ekincan.casim.net', style: contactStyle),
+        ),
         pw.SizedBox(height: 2),
-        
-        // Location and phone
+
+        // Location | Phone
         pw.Row(
           mainAxisAlignment: pw.MainAxisAlignment.center,
           children: [
             pw.Text(ResumeConstants.location, style: contactStyle),
-            pw.Text(' | ', style: contactStyle),
-            pw.Text(ResumeConstants.contactPhone, style: contactStyle),
+            sep(),
+            pw.UrlLink(
+              destination: 'tel:${ResumeConstants.contactPhone.replaceAll(' ', '')}',
+              child: pw.Text(ResumeConstants.contactPhone, style: contactStyle),
+            ),
           ],
         ),
       ],
     );
   }
-  
+
+  // ---------- Summary ----------
   static pw.Widget _buildSummary(pw.TextStyle style) {
-    return pw.Text(
-      ResumeConstants.profileIntro,
-      style: style,
-    );
+    return pw.Text(ResumeConstants.profileIntro, style: style);
   }
-  
-  static pw.Widget _buildExperienceEntry({
+
+  // ---------- Experience (fallback pagination strategy) ----------
+  static pw.Widget _buildExperienceEntryPaginated({
     required String company,
     required String position,
     required String location,
@@ -207,112 +249,141 @@ class PdfGenerator {
     required pw.TextStyle locationStyle,
     required pw.TextStyle bodyStyle,
   }) {
-    // Create the list of responsibilities with hyphens instead of bullet points
-    List<pw.Widget> responsibilityWidgets = responsibilities.map((point) {
-      return pw.Padding(
-        padding: const pw.EdgeInsets.only(bottom: 3),
-        child: pw.Row(
+    final normalizedPeriod = period.replaceAll('–', 'to').replaceAll('—', 'to');
+    final headerLineText = '$position | $company | ${_extractLocation(location)} | $normalizedPeriod';
+
+    // Build responsibility bullets once
+    List<pw.Widget> buildRespBullets(List<String> items) => items
+        .map((point) => pw.Padding(
+              padding: const pw.EdgeInsets.only(bottom: 3),
+              child: pw.Row(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Text('•  ', style: bodyStyle),
+                  pw.Expanded(child: pw.Text(point, style: bodyStyle)),
+                ],
+              ),
+            ))
+        .toList();
+
+    final blocks = <pw.Widget>[
+      pw.Text(headerLineText, style: positionStyle),
+      _vSpace(6),
+    ];
+
+    // Responsibilities in chunks — reduces mid-page splits
+    final respChunks = _chunk<String>(responsibilities, 4);
+    for (final chunk in respChunks) {
+      blocks.add(pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: buildRespBullets(chunk),
+      ));
+    }
+
+    // Notable Projects (optional) with small “title + first chunk” group
+    final hasProjects = projects != null && projects.isNotEmpty;
+    if (hasProjects) {
+      final projChunks = _chunk<String>(projects, 4);
+
+      blocks.add(_vSpace(6));
+      blocks.add(pw.Text('Notable Projects', style: bodyStyle.copyWith(fontWeight: pw.FontWeight.bold)));
+      blocks.add(_vSpace(3));
+
+      // First chunk
+      blocks.add(pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: projChunks.first
+            .map((p) => pw.Padding(
+                  padding: const pw.EdgeInsets.only(bottom: 3),
+                  child: pw.Row(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text('– ', style: bodyStyle),
+                      pw.Expanded(child: pw.Text(p, style: bodyStyle)),
+                    ],
+                  ),
+                ))
+            .toList(),
+      ));
+
+      // Remaining chunks (if any)
+      for (var i = 1; i < projChunks.length; i++) {
+        blocks.add(pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.start,
-          children: [
-            pw.Text('- ', style: bodyStyle),
-            pw.Expanded(
-              child: pw.Text(point, style: bodyStyle),
-            ),
-          ],
-        ),
-      );
-    }).toList();
-    
-    // Create list of notable projects if available
-    List<pw.Widget> projectWidgets = [];
-    if (projects != null && projects.isNotEmpty) {
-      for (final project in projects) {
-        projectWidgets.add(
-          pw.Padding(
-            padding: const pw.EdgeInsets.only(bottom: 3),
-            child: pw.Row(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: [
-                pw.Text('- ', style: bodyStyle),
-                pw.Expanded(
-                  child: pw.Text('Notable Projects: $project', style: bodyStyle),
-                ),
-              ],
-            ),
-          ),
-        );
+          children: projChunks[i]
+              .map((p) => pw.Padding(
+                    padding: const pw.EdgeInsets.only(bottom: 3),
+                    child: pw.Row(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Text('– ', style: bodyStyle),
+                        pw.Expanded(child: pw.Text(p, style: bodyStyle)),
+                      ],
+                    ),
+                  ))
+              .toList(),
+        ));
       }
     }
-    
-    return pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
-      children: [
-        // Company and period in the same row
-        pw.Row(
-          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-          children: [
-            pw.Text(position, style: positionStyle),
-            pw.Text(period, style: locationStyle),
-          ],
-        ),
-        pw.Text('$company | ${_extractLocation(location)}', style: locationStyle),
-        pw.SizedBox(height: 5),
-        
-        // Responsibilities with bullet points
-        ...responsibilityWidgets,
-        
-        // Projects with bullet points if available
-        ...projectWidgets,
-        
-        pw.SizedBox(height: 10),
-      ],
+
+    return pw.Padding(
+      padding: const pw.EdgeInsets.only(bottom: 12),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: blocks,
+      ),
     );
   }
-  
+
+  // ---------- Core Skills ----------
   static pw.Widget _buildCoreSkills(pw.TextStyle style, pw.Font boldFont) {
-    // Extract key skills from your ResumeConstants.skills map
-    Map<String, List<String>> simplifiedSkills = {
+    final Map<String, List<String>> simplifiedSkills = {
       'Programming Languages': _extractSkillList(['Programming Languages']),
       'Frameworks & Libraries': _extractSkillList(['Frontend Technologies', 'Backend Technologies']),
       'Database Technologies': _extractSkillList(['Databases']),
       'DevOps & Cloud': _extractSkillList(['Cloud & DevOps']),
-      'Other Technologies': _extractSkillList(['Version Control & Collaboration', 'Testing & Quality Assurance']),
+      'Version Control & Collaboration': _extractSkillList(['Version Control & Collaboration']),
+      'Testing & Quality Assurance': _extractSkillList(['Testing & Quality Assurance']),
     };
-    
-    List<pw.Widget> skillSections = [];
-    
-    simplifiedSkills.forEach((category, skills) {
-      if (skills.isNotEmpty) {
-        skillSections.add(
-          pw.RichText(
-            text: pw.TextSpan(
-              text: '$category: ',
+
+    final List<pw.Widget> skillSections = simplifiedSkills.entries.map((entry) {
+    final category = entry.key;
+    final skills = entry.value;
+
+    if (skills.isEmpty) return pw.SizedBox();
+
+    return pw.Padding(
+      padding: const pw.EdgeInsets.only(bottom: 4),
+      child: pw.Row(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Container(
+            width: 150, 
+            child: pw.Text(
+              category,
               style: style.copyWith(
                 fontWeight: pw.FontWeight.bold,
               ),
-              children: [
-                pw.TextSpan(
-                  text: skills.join(', '),
-                  style: style,
-                ),
-              ],
             ),
           ),
-        );
-        
-        skillSections.add(pw.SizedBox(height: 3));
-      }
-    });
-    
-    return pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
-      children: skillSections,
+          // Skills list
+          pw.Expanded(
+            child: pw.Text(
+              skills.join(', '),
+              style: style,
+            ),
+          ),
+        ],
+      ),
     );
+  }).toList();
+
+  return pw.Column(
+    crossAxisAlignment: pw.CrossAxisAlignment.start, children: skillSections);
   }
-  
+
   static List<String> _extractSkillList(List<String> categories) {
-    List<String> result = [];
-    
+    final result = <String>[];
     for (final category in categories) {
       if (ResumeConstants.skills.containsKey(category)) {
         final subcategories = ResumeConstants.skills[category]!;
@@ -321,124 +392,64 @@ class PdfGenerator {
         }
       }
     }
-    
     return result;
   }
-  
+
+  // ---------- Education ----------
   static pw.Widget _buildEducation(pw.TextStyle style, pw.Font boldFont) {
-    // Parse education information from ResumeConstants.educationSummary
-    List<String> educationLines = ResumeConstants.educationSummary.split('\n\n');
-    List<pw.Widget> educationEntries = [];
-    
-    for (int i = 0; i < educationLines.length; i += 2) {
-      if (i + 1 < educationLines.length) {
-        // Get the university and period
-        String university = educationLines[i].split(' | ')[0].trim();
-        String period = educationLines[i].split(' | ')[1].trim();
-        
-        // Get the degree and field
-        List<String> degreeParts = educationLines[i + 1].split(' ');
-        String degreeType = degreeParts[0].trim();
-        String field = degreeParts.sublist(1).join(' ').trim();
-        
-        educationEntries.add(
-          pw.Row(
-            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-            children: [
-              pw.Text(university, style: style.copyWith(fontWeight: pw.FontWeight.bold)),
-              pw.Text(period, style: style),
-            ],
-          ),
-        );
-        
-        educationEntries.add(
-          pw.Text('$degreeType $field', style: style),
-        );
-        
-        if (i + 2 < educationLines.length) {
-          educationEntries.add(pw.SizedBox(height: 5));
-        }
+    final blocks = ResumeConstants.educationSummary
+        .split(RegExp(r'\n\s*\n'))
+        .map((s) => s.trim())
+        .where((s) => s.isNotEmpty)
+        .toList();
+
+    final widgets = <pw.Widget>[];
+
+    for (final block in blocks) {
+      final lines = block.split('\n').map((l) => l.trim()).where((l) => l.isNotEmpty).toList();
+
+      String universityLine = lines.isNotEmpty ? lines.first : '';
+      String period = '';
+      String degreeLine = lines.length > 1 ? lines[1] : '';
+
+      final pipeIdx = universityLine.indexOf(' | ');
+      if (pipeIdx >= 0) {
+        period = universityLine.substring(pipeIdx + 3).trim();
+        universityLine = universityLine.substring(0, pipeIdx).trim();
       }
-    }
-    
-    return pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
-      children: educationEntries,
-    );
-  }
-  
-  static pw.Widget _buildCertificates(pw.TextStyle style) {
-    // Parse certificates from ResumeConstants.certificates
-    List<String> certificateLines = ResumeConstants.certificates.split('\n');
-    List<pw.Widget> certificateEntries = [];
-    
-    for (int i = 0; i < certificateLines.length; i += 2) {
-      if (i + 1 < certificateLines.length) {
-        String certificateName = certificateLines[i].trim();
-        String issuer = certificateLines[i + 1].trim();
-        
-        // Extract date from certificate name
-        String date = '';
-        List<String> parts = certificateName.split(' - ');
-        if (parts.length > 1) {
-          date = parts[1].trim();
-          certificateName = parts[0].trim();
-        }
-        
-        certificateEntries.add(
-          pw.Row(
-            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Expanded(
-                child: pw.Text(certificateName, style: style),
-              ),
-              pw.SizedBox(width: 10),
-              pw.Text(date, style: style),
-            ],
-          ),
-        );
-        
-        certificateEntries.add(
-          pw.Text(issuer, style: style),
-        );
-        
-        if (i + 2 < certificateLines.length) {
-          certificateEntries.add(pw.SizedBox(height: 5));
-        }
+      period = period.replaceAll('–', 'to').replaceAll('—', 'to');
+
+      if (degreeLine.isNotEmpty) {
+        // normalize common verbose phrasing a bit (optional)
+        degreeLine = degreeLine.replaceAll(RegExp(r'\s+'), ' ').trim();
       }
+
+      widgets.add(
+        pw.Row(
+          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Expanded(
+              child: pw.Text(universityLine, style: style.copyWith(fontWeight: pw.FontWeight.bold)),
+            ),
+            if (period.isNotEmpty) pw.Text(period, style: style),
+          ],
+        ),
+      );
+
+      if (degreeLine.isNotEmpty) {
+        widgets.add(pw.Text(degreeLine, style: style));
+      }
+      widgets.add(pw.SizedBox(height: 6));
     }
-    
-    return pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
-      children: certificateEntries,
-    );
+
+    return pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: widgets);
   }
-  
-  // Helper methods for extracting location and period from the location string
+
+  // ---------- Parsers ----------
   static String _extractLocation(String locationString) {
-    // Extract the actual location (before the pipe or dash)
-    List<String> parts = locationString.split(' | ');
-    if (parts.length > 1) {
-      return parts[0].trim();
-    }
-    
-    // If there's no pipe, try with dash
-    parts = locationString.split(' - ');
-    if (parts.length > 1) {
-      return parts[0].trim();
-    }
-    
-    return locationString;
+    final idx = locationString.indexOf(' | ');
+    return idx >= 0 ? locationString.substring(0, idx).trim() : locationString.trim();
   }
-  
-  static String _extractPeriod(String locationString) {
-    // Extract the period (after the pipe)
-    List<String> parts = locationString.split(' | ');
-    if (parts.length > 1) {
-      return parts[1].trim();
-    }
-    
-    return "";
-  }
+
 }

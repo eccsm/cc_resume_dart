@@ -1,17 +1,18 @@
-// lib/widgets/section_card.dart
-
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 
-class SectionCard extends StatelessWidget {
+/// Premium glassmorphic section card
+class SectionCard extends StatefulWidget {
   final String title;
   final Widget content;
   final IconData? icon;
   final Color? accentColor;
-  final bool animate;
   final double headerFontSize;
   final EdgeInsets contentPadding;
   final EdgeInsets margin;
   final double borderRadius;
+  final ImageProvider? backgroundImage;
+  final double backgroundImageOpacity;
 
   const SectionCard({
     super.key,
@@ -19,112 +20,150 @@ class SectionCard extends StatelessWidget {
     required this.content,
     this.icon,
     this.accentColor,
-    this.animate = true,
     this.headerFontSize = 20,
-    this.contentPadding = const EdgeInsets.all(16),
-    this.margin = const EdgeInsets.symmetric(vertical: 12),
-    this.borderRadius = 12,
+    this.contentPadding = const EdgeInsets.all(20),
+    this.margin = const EdgeInsets.symmetric(vertical: 10),
+    this.borderRadius = 16,
+    this.backgroundImage,
+    this.backgroundImageOpacity = 0.04,
   });
 
   @override
+  State<SectionCard> createState() => _SectionCardState();
+}
+
+class _SectionCardState extends State<SectionCard> {
+  bool _isHovered = false;
+
+  @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final effectiveAccentColor = accentColor ?? theme.primaryColor;
-    
-    // Theme-specific colors
-    final cardBackgroundColor = isDark ? Colors.grey.shade900.withOpacity(0.85) : Colors.white.withOpacity(0.9);
-    final headerBackgroundColor = isDark ? Colors.black87.withOpacity(0.9) : Colors.grey.shade100;
-    final headerBorderColor = effectiveAccentColor.withOpacity(0.3);
-    final cardBorderColor = isDark ? Colors.grey.shade800 : Colors.grey.shade300;
-    final textColor = isDark ? Colors.white : Colors.black87;
-    
-    return TweenAnimationBuilder<double>(
-      duration: animate ? const Duration(milliseconds: 800) : Duration.zero,
-      tween: Tween<double>(begin: 0.0, end: 1.0),
-      builder: (context, value, child) {
-        return Opacity(
-          opacity: value,
-          child: Transform.translate(
-            offset: Offset(0, 20 * (1 - value)),
-            child: child,
-          ),
-        );
-      },
-      child: Container(
-        margin: margin,
+    final themeColors = AppTheme.getColors(context);
+    final effectiveAccentColor = widget.accentColor ?? AppTheme.primaryColor;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        margin: widget.margin,
         decoration: BoxDecoration(
-          color: cardBackgroundColor,
-          borderRadius: BorderRadius.circular(borderRadius),
+          color: isDark
+              ? themeColors.card.withAlpha(_isHovered ? 195 : 170)
+              : themeColors.card.withValues(alpha: _isHovered ? 0.82 : 0.76),
+          borderRadius: BorderRadius.circular(widget.borderRadius),
+          image: widget.backgroundImage != null
+              ? DecorationImage(
+                  image: widget.backgroundImage!,
+                  fit: BoxFit.cover,
+                  opacity: widget.backgroundImageOpacity,
+                  colorFilter: ColorFilter.mode(
+                    Theme.of(context).brightness == Brightness.dark
+                        ? Colors.black
+                        : Colors.white,
+                    BlendMode.softLight,
+                  ),
+                )
+              : null,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.2),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+              color: isDark
+                  ? Colors.black.withAlpha(_isHovered ? 100 : 60)
+                  : const Color(0xFF1A1D26).withAlpha(_isHovered ? 35 : 18),
+              blurRadius: _isHovered ? 24 : 14,
+              offset: Offset(0, _isHovered ? 8 : 4),
+              spreadRadius: isDark ? 0 : (_isHovered ? 1 : 0),
             ),
+            if (isDark)
+              BoxShadow(
+                color: effectiveAccentColor.withAlpha(_isHovered ? 15 : 0),
+                blurRadius: 30,
+                spreadRadius: -4,
+              ),
           ],
           border: Border.all(
-            color: cardBorderColor,
+            color: _isHovered
+                ? effectiveAccentColor.withAlpha(isDark ? 60 : 40)
+                : themeColors.border,
             width: 1,
           ),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: headerBackgroundColor,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(borderRadius),
-                  topRight: Radius.circular(borderRadius),
-                ),
-                border: Border(
-                  bottom: BorderSide(
-                    color: headerBorderColor,
-                    width: 1,
-                  ),
-                ),
-              ),
-              child: Row(
-                children: [
-                  if (icon != null) ...[
-                    Icon(
-                      icon,
-                      color: effectiveAccentColor.withOpacity(0.9),
-                      size: headerFontSize + 2,
-                    ),
-                    const SizedBox(width: 12),
-                  ],
-                  Expanded(
-                    child: Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: headerFontSize,
-                        fontWeight: FontWeight.bold,
-                        color: textColor,
-                        inherit: true,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(widget.borderRadius),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header with gradient accent
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                    colors: [
+                      themeColors.cardHeader.withValues(
+                        alpha: isDark ? 0.72 : 0.64,
                       ),
-                      overflow: TextOverflow.ellipsis,
+                      isDark
+                          ? themeColors.cardHeader.withAlpha(132)
+                          : themeColors.cardHeader.withValues(alpha: 0.56),
+                    ],
+                  ),
+                  border: Border(
+                    bottom: BorderSide(
+                      color: effectiveAccentColor.withAlpha(isDark ? 50 : 30),
+                      width: 1,
                     ),
                   ),
-                ],
-              ),
-            ),
-            // Content
-            Padding(
-              padding: contentPadding,
-              child: DefaultTextStyle(
-                style: TextStyle(
-                  color: textColor,
-                  fontSize: 14,
-                  inherit: true,
                 ),
-                child: content,
+                child: Row(
+                  children: [
+                    if (widget.icon != null) ...[
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color:
+                              effectiveAccentColor.withAlpha(isDark ? 30 : 20),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(
+                          widget.icon,
+                          color: effectiveAccentColor,
+                          size: widget.headerFontSize,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                    ],
+                    Expanded(
+                      child: Text(
+                        widget.title,
+                        style: TextStyle(
+                          fontSize: widget.headerFontSize,
+                          fontWeight: FontWeight.w700,
+                          color: themeColors.text,
+                          letterSpacing: -0.3,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+              // Content
+              Padding(
+                padding: widget.contentPadding,
+                child: DefaultTextStyle(
+                  style: TextStyle(
+                    color: themeColors.text,
+                    fontSize: 14,
+                    height: 1.5,
+                  ),
+                  child: widget.content,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
