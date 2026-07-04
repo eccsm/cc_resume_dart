@@ -177,7 +177,7 @@ class ResumeKnowledge {
         q.contains('openai') ||
         q.contains('chatbot') ||
         q.contains('gpt')) {
-      return 'Ekincan designed and delivered an OpenAI-powered HR chatbot for '
+      return 'Ekincan designed and delivered an GenAI-powered HR chatbot for '
           'Pegasus Airlines using Spring Boot 3.x. He implemented Redis-based '
           'intelligent caching, minute-based rate limiting, and cost-optimized '
           'token management strategies to reduce API costs significantly. This '
