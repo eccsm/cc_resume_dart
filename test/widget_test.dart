@@ -34,7 +34,7 @@ void main() {
       expect(ResumeKnowledge.keywordResponse('kafka experience?'),
           contains('Kafka'));
       expect(ResumeKnowledge.keywordResponse('anything with AI?'),
-          contains('OpenAI'));
+          contains('GenAI'));
     });
 
     test('pdf intent detection', () {

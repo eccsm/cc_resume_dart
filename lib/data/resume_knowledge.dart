@@ -174,7 +174,7 @@ class ResumeKnowledge {
 
     if (q.contains('ai') ||
         q.contains('llm') ||
-        q.contains('openai') ||
+        q.contains('genai') ||
         q.contains('chatbot') ||
         q.contains('gpt')) {
       return 'Ekincan designed and delivered an GenAI-powered HR chatbot for '
@@ -216,7 +216,7 @@ class ResumeKnowledge {
         q.contains('language')) {
       return 'Core stack: Java 17/21, Spring Boot 3.x, Kafka, Redis, PostgreSQL, '
           'Oracle, MongoDB, Kubernetes, Docker, AWS. Also experienced with Python, '
-          'Angular, React, TypeScript, OpenAI APIs, Terraform, and Ansible.';
+          'Angular, React, TypeScript, GenAI APIs, Terraform, and Ansible.';
     }
 
     if (q.contains('reloc') ||
