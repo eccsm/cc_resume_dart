@@ -250,7 +250,10 @@ class ResumeConstants {
   // Contact Information
   // =========================
   static const String contactEmail = 'ekincan@casim.net';
-  static const String contactPhone = '[phone removed]';
+  // Phone number is intentionally not committed to the public repo.
+  // Supply it at build time: flutter build web --dart-define=RESUME_PHONE=+90...
+  // When absent, the PDF simply omits the phone entry.
+  static const String contactPhone = String.fromEnvironment('RESUME_PHONE');
   static const String contactLinkedIn = 'https://www.linkedin.com/in/eccsm';
   static const String contactGitHub = 'https://github.com/eccsm';
   static const String contactWebsite = 'https://ekincan.casim.net';
