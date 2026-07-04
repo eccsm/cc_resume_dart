@@ -1,6 +1,5 @@
-// lib/widgets/timeline_experience_card.dart
-
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 
 class TimelineExperienceCard extends StatefulWidget {
   final String title;
@@ -10,7 +9,7 @@ class TimelineExperienceCard extends StatefulWidget {
   final List<String> points;
   final List<String>? notableProjects;
   final Color? accentColor;
-  final bool animate;
+  final bool isFirst;
 
   const TimelineExperienceCard({
     super.key,
@@ -21,246 +20,285 @@ class TimelineExperienceCard extends StatefulWidget {
     required this.points,
     this.notableProjects,
     this.accentColor,
-    this.animate = true,
+    this.isFirst = false,
   });
 
   @override
   State<TimelineExperienceCard> createState() => _TimelineExperienceCardState();
 }
 
-class _TimelineExperienceCardState extends State<TimelineExperienceCard> {
+class _TimelineExperienceCardState extends State<TimelineExperienceCard>
+    with SingleTickerProviderStateMixin {
   bool _expanded = false;
+  bool _isHovered = false;
+  late AnimationController _pulseController;
+  late Animation<double> _pulseAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    );
+    _pulseAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+    if (widget.isFirst) {
+      _pulseController.repeat(reverse: true);
+    }
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Get theme data
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    
-    // Set theme-appropriate colors
-    final effectiveAccentColor = widget.accentColor ?? theme.primaryColor;
-    final textColor = theme.textTheme.bodyLarge?.color ?? Colors.white;
-    final cardColor = isDark ? Colors.grey.shade900.withOpacity(0.85) : Colors.white;
-    final headerColor = isDark ? Colors.grey.shade900 : Colors.grey.shade50;
-    final borderColor = isDark ? Colors.grey.shade800 : Colors.grey.shade300;
-    
+    final colors = AppTheme.getColors(context);
+    final effectiveAccentColor = widget.accentColor ?? AppTheme.primaryColor;
+
     return Padding(
-      padding: const EdgeInsets.only(left: 8.0, bottom: 16.0),
+      padding: const EdgeInsets.only(left: 8, bottom: 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Timeline line + dot
           SizedBox(
-            width: 20,
+            width: 24,
             child: Column(
               children: [
-                Container(
-                  width: 20,
-                  height: 20,
-                  decoration: BoxDecoration(
-                    color: isDark ? Colors.grey.shade800 : Colors.white,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.3),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
+                // Timeline dot — pulses for current role
+                widget.isFirst
+                    ? AnimatedBuilder(
+                        animation: _pulseAnimation,
+                        builder: (context, child) {
+                          return Container(
+                            width: 20,
+                            height: 20,
+                            decoration: BoxDecoration(
+                              color: effectiveAccentColor.withAlpha(30),
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: effectiveAccentColor,
+                                width: 2.5,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: effectiveAccentColor.withAlpha(
+                                    (60 * _pulseAnimation.value).round(),
+                                  ),
+                                  blurRadius: 8 * _pulseAnimation.value,
+                                  spreadRadius: 2 * _pulseAnimation.value,
+                                ),
+                              ],
+                            ),
+                            child: Center(
+                              child: Container(
+                                width: 6,
+                                height: 6,
+                                decoration: BoxDecoration(
+                                  color: effectiveAccentColor,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      )
+                    : Container(
+                        width: 18,
+                        height: 18,
+                        decoration: BoxDecoration(
+                          color: isDark ? colors.cardHeader : Colors.white,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: effectiveAccentColor.withAlpha(150),
+                            width: 2,
+                          ),
+                        ),
                       ),
-                    ],
-                    border: Border.all(
-                      color: effectiveAccentColor,
-                      width: 2,
-                    ),
-                  ),
-                ),
+                // Connecting line
                 Container(
                   width: 2,
-                  height: _expanded ? 320 : 200,
-                  color: effectiveAccentColor.withOpacity(0.6),
+                  height: _expanded ? 350 : 200,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        effectiveAccentColor.withAlpha(100),
+                        effectiveAccentColor.withAlpha(20),
+                      ],
+                    ),
+                  ),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 14),
+          // Card
           Expanded(
-            child: TweenAnimationBuilder<double>(
-              duration: widget.animate ? const Duration(milliseconds: 800) : Duration.zero,
-              tween: Tween<double>(begin: 0.0, end: 1.0),
-              builder: (context, value, child) {
-                return Opacity(
-                  opacity: value,
-                  child: Transform.translate(
-                    offset: Offset(0, 20 * (1 - value)),
-                    child: child,
-                  ),
-                );
-              },
-              child: Card(
-                color: cardColor,
-                elevation: 2,
+            child: MouseRegion(
+              onEnter: (_) => setState(() => _isHovered = true),
+              onExit: (_) => setState(() => _isHovered = false),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
                 margin: const EdgeInsets.only(bottom: 8, top: 4),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  side: BorderSide(
-                    color: _expanded 
-                        ? effectiveAccentColor.withOpacity(0.5) 
-                        : borderColor,
-                    width: _expanded ? 2 : 1,
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? colors.card.withAlpha(168)
+                      : colors.card.withValues(alpha: 0.74),
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(
+                      color: isDark
+                          ? Colors.black.withAlpha(_isHovered ? 80 : 40)
+                          : effectiveAccentColor.withAlpha(_isHovered ? 15 : 5),
+                      blurRadius: _isHovered ? 20 : 8,
+                      offset: Offset(0, _isHovered ? 6 : 2),
+                    ),
+                  ],
+                  border: Border.all(
+                    color: _isHovered || _expanded
+                        ? effectiveAccentColor.withAlpha(isDark ? 60 : 40)
+                        : colors.border,
+                    width: 1,
                   ),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Header with theme-appropriate background
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: headerColor,
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(12),
-                          topRight: Radius.circular(12),
-                        ),
-                        border: Border(
-                          bottom: BorderSide(
-                            color: effectiveAccentColor.withOpacity(0.3),
-                            width: 1,
-                          ),
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.title,
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: textColor,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Header
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? colors.cardHeader.withAlpha(136)
+                              : colors.cardHeader.withValues(alpha: 0.58),
+                          border: Border(
+                            bottom: BorderSide(
+                              color: effectiveAccentColor.withAlpha(40),
+                              width: 1,
                             ),
                           ),
-                          const SizedBox(height: 4),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  widget.role,
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: textColor.withOpacity(0.9),
-                                  ),
-                                ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.title,
+                              style: TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.w700,
+                                color: colors.text,
+                                letterSpacing: -0.2,
                               ),
-                              Text(
-                                widget.period,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontStyle: FontStyle.italic,
-                                  color: textColor.withOpacity(0.7),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            widget.location,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: textColor.withOpacity(0.7),
                             ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          ...(_expanded 
-                            ? widget.points 
-                            : widget.points.take(widget.notableProjects != null ? 2 : 3)
-                          ).map(
-                            (point) => Padding(
-                              padding: const EdgeInsets.only(bottom: 8),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Icon(
-                                    Icons.arrow_right_alt,
-                                    color: effectiveAccentColor.withOpacity(0.85),
-                                    size: 20,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Expanded(
+                            const SizedBox(height: 6),
+                            Row(
+                              children: [
+                                if (widget.isFirst) ...[
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.accentGreen.withAlpha(25),
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                        color:
+                                            AppTheme.accentGreen.withAlpha(60),
+                                      ),
+                                    ),
                                     child: Text(
-                                      point,
+                                      'Current',
                                       style: TextStyle(
-                                        fontSize: 14,
-                                        height: 1.3,
-                                        color: textColor,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppTheme.accentGreen,
                                       ),
                                     ),
                                   ),
+                                  const SizedBox(width: 8),
                                 ],
-                              ),
-                            ),
-                          ),
-                          
-                          if (!_expanded && widget.points.length > (widget.notableProjects != null ? 2 : 3))
-                            _buildExpandButton('Show all ${widget.points.length} points'),
-                            
-                          if (widget.notableProjects != null && 
-                              widget.notableProjects!.isNotEmpty) ...[
-                            const SizedBox(height: 16),
-
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.work_outline,
-                                  color: effectiveAccentColor.withOpacity(0.9),
-                                  size: 18,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Notable Projects',
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.bold,
-                                    color: textColor,
+                                Expanded(
+                                  child: Text(
+                                    widget.role,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: colors.textSecondary,
+                                      fontWeight: FontWeight.w500,
+                                    ),
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 8),
-                            
-                            ...(_expanded 
-                              ? widget.notableProjects! 
-                              : widget.notableProjects!.take(1)
-                            ).map(
-                              (project) => Padding(
-                                padding: const EdgeInsets.only(bottom: 8, left: 26),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.location_on_outlined,
+                                  size: 13,
+                                  color: colors.textSecondary,
+                                ),
+                                const SizedBox(width: 4),
+                                Expanded(
+                                  child: Text(
+                                    widget.location,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: colors.textSecondary,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Points
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            ...(_expanded
+                                    ? widget.points
+                                    : widget.points.take(
+                                        widget.notableProjects != null ? 2 : 3))
+                                .map(
+                              (point) => Padding(
+                                padding: const EdgeInsets.only(bottom: 8),
                                 child: Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Container(
-                                      width: 6,
-                                      height: 6,
                                       margin: const EdgeInsets.only(top: 6),
+                                      width: 5,
+                                      height: 5,
                                       decoration: BoxDecoration(
-                                        color: effectiveAccentColor.withOpacity(0.7),
+                                        color:
+                                            effectiveAccentColor.withAlpha(180),
                                         shape: BoxShape.circle,
                                       ),
                                     ),
-                                    const SizedBox(width: 8),
+                                    const SizedBox(width: 10),
                                     Expanded(
                                       child: Text(
-                                        project,
+                                        point,
                                         style: TextStyle(
                                           fontSize: 13,
-                                          height: 1.3,
-                                          color: textColor,
-                                          fontWeight: FontWeight.w500,
+                                          height: 1.45,
+                                          color: colors.text,
                                         ),
                                       ),
                                     ),
@@ -268,23 +306,88 @@ class _TimelineExperienceCardState extends State<TimelineExperienceCard> {
                                 ),
                               ),
                             ),
-                            
-                            if (!_expanded && widget.notableProjects!.length > 1)
-                              Padding(
-                                padding: const EdgeInsets.only(left: 26),
-                                child: _buildExpandButton('Show all ${widget.notableProjects!.length} projects'),
+                            if (!_expanded &&
+                                widget.points.length >
+                                    (widget.notableProjects != null ? 2 : 3))
+                              _buildExpandButton(
+                                  'Show all ${widget.points.length} points'),
+                            if (widget.notableProjects != null &&
+                                widget.notableProjects!.isNotEmpty) ...[
+                              const SizedBox(height: 14),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.rocket_launch_rounded,
+                                    color: effectiveAccentColor.withAlpha(200),
+                                    size: 16,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Notable Projects',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: colors.text,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              ...(_expanded
+                                      ? widget.notableProjects!
+                                      : widget.notableProjects!.take(1))
+                                  .map(
+                                (project) => Padding(
+                                  padding: const EdgeInsets.only(
+                                      bottom: 6, left: 24),
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Container(
+                                        width: 5,
+                                        height: 5,
+                                        margin: const EdgeInsets.only(top: 6),
+                                        decoration: BoxDecoration(
+                                          color: effectiveAccentColor
+                                              .withAlpha(120),
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          project,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            height: 1.4,
+                                            color: colors.textSecondary,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              if (!_expanded &&
+                                  widget.notableProjects!.length > 1)
+                                Padding(
+                                  padding: const EdgeInsets.only(left: 24),
+                                  child: _buildExpandButton(
+                                      'Show all ${widget.notableProjects!.length} projects'),
+                                ),
+                            ],
+                            if (_expanded)
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: _buildCollapseButton(),
                               ),
                           ],
-
-                          if (_expanded)
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: _buildCollapseButton(),
-                            ),
-                        ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -295,35 +398,27 @@ class _TimelineExperienceCardState extends State<TimelineExperienceCard> {
   }
 
   Widget _buildExpandButton(String text) {
-    final theme = Theme.of(context);
-    final effectiveAccentColor = widget.accentColor ?? theme.primaryColor;
-    
+    final effectiveAccentColor = widget.accentColor ?? AppTheme.primaryColor;
+
     return TextButton(
-      onPressed: () {
-        setState(() {
-          _expanded = true;
-        });
-      },
+      onPressed: () => setState(() => _expanded = true),
       style: TextButton.styleFrom(
         padding: EdgeInsets.zero,
-        minimumSize: const Size(0, 36),
+        minimumSize: const Size(0, 32),
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.expand_more,
-            color: effectiveAccentColor.withOpacity(0.7),
-            size: 16,
-          ),
+          Icon(Icons.expand_more_rounded,
+              color: effectiveAccentColor, size: 16),
           const SizedBox(width: 4),
           Text(
             text,
             style: TextStyle(
-              fontSize: 13,
-              color: effectiveAccentColor.withOpacity(0.7),
-            ),
+                fontSize: 12,
+                color: effectiveAccentColor,
+                fontWeight: FontWeight.w500),
           ),
         ],
       ),
@@ -331,35 +426,27 @@ class _TimelineExperienceCardState extends State<TimelineExperienceCard> {
   }
 
   Widget _buildCollapseButton() {
-    final theme = Theme.of(context);
-    final effectiveAccentColor = widget.accentColor ?? theme.primaryColor;
-    
+    final effectiveAccentColor = widget.accentColor ?? AppTheme.primaryColor;
+
     return TextButton(
-      onPressed: () {
-        setState(() {
-          _expanded = false;
-        });
-      },
+      onPressed: () => setState(() => _expanded = false),
       style: TextButton.styleFrom(
         padding: EdgeInsets.zero,
-        minimumSize: const Size(0, 36),
+        minimumSize: const Size(0, 32),
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.expand_less,
-            color: effectiveAccentColor.withOpacity(0.7),
-            size: 16,
-          ),
+          Icon(Icons.expand_less_rounded,
+              color: effectiveAccentColor, size: 16),
           const SizedBox(width: 4),
           Text(
             'Collapse',
             style: TextStyle(
-              fontSize: 13,
-              color: effectiveAccentColor.withOpacity(0.7),
-            ),
+                fontSize: 12,
+                color: effectiveAccentColor,
+                fontWeight: FontWeight.w500),
           ),
         ],
       ),
