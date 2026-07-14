@@ -108,10 +108,10 @@ class ManifestBadgeRepository implements BadgeRepository {
         label: 'Hugging Face',
       ),
       BadgeData.asset(
-        'assets/images/lexy.png',
-        url: 'https://play.google.com/apps/testing/net.casim.voicenotes',
-        palette: BadgePalette.lexy,
-        label: 'Lexy App',
+        'assets/images/harmonova.png',
+        url: 'https://github.com/harmonova',
+        palette: BadgePalette.harmonova,
+        label: 'Harmonova',
       ),
       BadgeData.asset(
         'assets/images/linguana_app_logo.png',
@@ -159,7 +159,7 @@ class BadgePalette {
     Color(0xFFFFD21E),
     Color(0xFFFFD21E),
   );
-  static const lexy = BadgePalette(Colors.orange, Colors.black);
+  static const harmonova = BadgePalette(Color(0xFF0E0E0E), Colors.black);
   static const linguana = BadgePalette(Color(0xFF4DA3FF), Color(0xFF4DA3FF));
 }
 
