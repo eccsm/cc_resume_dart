@@ -155,12 +155,9 @@ class BadgePalette {
   final Color border;
   final Color shadow;
 
-  static const huggingFace = BadgePalette(
-    Color(0xFFFFD21E),
-    Color(0xFFFFD21E),
-  );
-  static const harmonova = BadgePalette(Color(0xFF0E0E0E), Color(0xFF0E0E0E));
-  static const linguana = BadgePalette(Color(0xFF4DA3FF), Color(0xFF6746B9));
+  static const huggingFace = BadgePalette(Color(0xFFFFD21E),Color(0xFFFFD21E),);
+  static const harmonova = BadgePalette(Color(0xFF1A4B71), Color(0xFF1A4B71));
+  static const linguana = BadgePalette(Color(0xFF6746B9), Color(0xFF6746B9));
 }
 
 class _BadgeGrid extends StatelessWidget {
