@@ -110,7 +110,7 @@ export const experiences: ExperienceEntry[] = [
   },
   {
     company: 'NTT DATA Business Solutions',
-    role: 'Expert / Solution Architect',
+    role: 'Business Applications Foundation Lead',
     location: 'Istanbul, Turkey',
     start: '2022-08',
     end: '2025-07',
