@@ -159,8 +159,8 @@ class BadgePalette {
     Color(0xFFFFD21E),
     Color(0xFFFFD21E),
   );
-  static const harmonova = BadgePalette(Color(0xFF0E0E0E), Colors.black);
-  static const linguana = BadgePalette(Color(0xFF4DA3FF), Color(0xFF4DA3FF));
+  static const harmonova = BadgePalette(Color(0xFF0E0E0E), Color(0xFF0E0E0E));
+  static const linguana = BadgePalette(Color(0xFF4DA3FF), Color(0xFF6746B9));
 }
 
 class _BadgeGrid extends StatelessWidget {
