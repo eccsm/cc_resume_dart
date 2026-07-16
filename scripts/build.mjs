@@ -27,55 +27,66 @@ function run(command, args, cwd) {
 
 const skipFlutter = process.argv.includes('--no-flutter');
 
-// 1. Emit resume.json first — the Flutter build doesn't need it, but tests
-//    and local servers do, and site prebuild would emit it later anyway.
-run('node', ['scripts/emit-resume-json.mjs'], site);
+try {
+  run('node', ['scripts/indexnow-key.mjs', 'prepare'], site);
 
-const flutterOut = join(site, 'public', 'assets', 'flutter');
-const manifest = join(site, 'src', 'generated', 'flutter-build.json');
-rmSync(flutterOut, { recursive: true, force: true });
-rmSync(manifest, { force: true });
+  // 1. Emit resume.json first — the Flutter build doesn't need it, but tests
+  //    and local servers do, and site prebuild would emit it later anyway.
+  run('node', ['scripts/emit-resume-json.mjs'], site);
 
-if (!skipFlutter) {
-  // 2. Flutter island into a content-addressed subdirectory.
-  const hash = execFileSync('git', ['rev-parse', '--short', 'HEAD'], {
-    cwd: root,
-  })
-    .toString()
-    .trim();
-  const base = `/assets/flutter/${hash}/`;
-  const outDir = join(flutterOut, hash);
+  const flutterOut = join(site, 'public', 'assets', 'flutter');
+  const manifest = join(site, 'src', 'generated', 'flutter-build.json');
+  rmSync(flutterOut, { recursive: true, force: true });
+  rmSync(manifest, { force: true });
 
-  const args = [
-    'build',
-    'web',
-    '--release',
-    '--pwa-strategy=none',
-    `--base-href=${base}`,
-    `--output=${outDir}`,
-  ];
-  // Optional; the PDF omits the phone entry when unset. Public repo — the
-  // number itself must only ever exist in CI secrets / local env.
-  if (process.env.RESUME_PHONE) {
-    args.push(`--dart-define=RESUME_PHONE=${process.env.RESUME_PHONE}`);
+  if (!skipFlutter) {
+    // 2. Flutter island into a content-addressed subdirectory.
+    const hash = execFileSync('git', ['rev-parse', '--short', 'HEAD'], {
+      cwd: root,
+    })
+      .toString()
+      .trim();
+    const base = `/assets/flutter/${hash}/`;
+    const outDir = join(flutterOut, hash);
+
+    const args = [
+      'build',
+      'web',
+      '--release',
+      '--pwa-strategy=none',
+      `--base-href=${base}`,
+      `--output=${outDir}`,
+    ];
+    // Optional; the PDF omits the phone entry when unset. Public repo — the
+    // number itself must only ever exist in CI secrets / local env.
+    if (process.env.RESUME_PHONE) {
+      args.push(`--dart-define=RESUME_PHONE=${process.env.RESUME_PHONE}`);
+    }
+    run('flutter', args, flutterApp);
+
+    // Belt and braces: never ship a service worker from the island directory.
+    rmSync(join(outDir, 'flutter_service_worker.js'), { force: true });
+
+    // 3. Manifest that FlutterIsland.astro reads at astro-build time.
+    mkdirSync(dirname(manifest), { recursive: true });
+    writeFileSync(manifest, JSON.stringify({ base }, null, 2) + '\n');
+    console.log(`\nFlutter island at ${base}`);
+  } else {
+    console.log('\nSkipping Flutter build (--no-flutter); launch buttons will hide.');
   }
-  run('flutter', args, flutterApp);
 
-  // Belt and braces: never ship a service worker from the island directory.
-  rmSync(join(outDir, 'flutter_service_worker.js'), { force: true });
+  // 4. Astro build (its prebuild re-emits og.png + resume.json — harmless).
+  run('npm', ['run', 'build'], site);
 
-  // 3. Manifest that FlutterIsland.astro reads at astro-build time.
-  mkdirSync(dirname(manifest), { recursive: true });
-  writeFileSync(manifest, JSON.stringify({ base }, null, 2) + '\n');
-  console.log(`\nFlutter island at ${base}`);
-} else {
-  console.log('\nSkipping Flutter build (--no-flutter); launch buttons will hide.');
+  if (!existsSync(join(site, 'dist', 'index.html'))) {
+    throw new Error('site/dist/index.html missing after build');
+  }
+} finally {
+  try {
+    run('node', ['scripts/indexnow-key.mjs', 'cleanup'], site);
+  } catch {
+    console.warn('\nWarning: could not clean up generated IndexNow key file from site/public.');
+  }
 }
 
-// 4. Astro build (its prebuild re-emits og.png + resume.json — harmless).
-run('npm', ['run', 'build'], site);
-
-if (!existsSync(join(site, 'dist', 'index.html'))) {
-  throw new Error('site/dist/index.html missing after build');
-}
 console.log('\nDone: deployable output in site/dist/');
