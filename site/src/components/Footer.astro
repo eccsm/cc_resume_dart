@@ -1,15 +1,22 @@
 ---
+interface Props {
+  interactiveLink?: boolean;
+}
+
+const { interactiveLink = true } = Astro.props;
 const year = new Date().getFullYear();
 ---
 
 <footer>
-  <p>© {year} Ekincan Casim</p>
-  <p>
-    <!-- Revealed by FlutterIsland's script when a Flutter build is present -->
-    <button type="button" class="flutter-link" data-launch-interactive hidden>
-      View the interactive Flutter version
-    </button>
-  </p>
+  <p>&copy; {year} Ekincan Casim</p>
+  {interactiveLink && (
+    <p>
+      <!-- Revealed by FlutterIsland's script when a Flutter build is present -->
+      <button type="button" class="flutter-link" data-launch-interactive hidden>
+        View the interactive Flutter version
+      </button>
+    </p>
+  )}
 </footer>
 
 <style>

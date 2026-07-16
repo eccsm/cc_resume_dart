@@ -12,6 +12,8 @@
     "submit:indexnow": "node scripts/submit-indexnow.mjs",
     "submit:indexnow:dry-run": "node scripts/submit-indexnow.mjs --dry-run",
     "test:indexnow": "node --test scripts/indexnow.test.mjs",
+    "test:case-studies": "node --test scripts/case-studies.test.mjs",
+    "test:site": "node --test scripts/indexnow.test.mjs scripts/case-studies.test.mjs",
     "preview": "astro preview",
     "astro": "astro"
   },

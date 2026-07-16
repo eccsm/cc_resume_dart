@@ -1,38 +1,48 @@
 ---
 import '../styles/global.css';
 import {
-  profile,
-  experiences,
-  education,
+  canonicalOrigin,
   contact,
+  education,
+  experiences,
   knowsAbout,
+  profile,
 } from '../data/resume';
 
 interface Props {
   title: string;
   description: string;
+  ogType?: string;
+  includePersonSchema?: boolean;
+  includeWebsiteSchema?: boolean;
+  pageJsonLd?: Record<string, unknown> | Record<string, unknown>[];
 }
 
-const { title, description } = Astro.props;
+const {
+  title,
+  description,
+  ogType = 'website',
+  includePersonSchema = false,
+  includeWebsiteSchema = false,
+  pageJsonLd = [],
+} = Astro.props;
+
 const canonical = new URL(Astro.url.pathname, Astro.site);
 const ogImage = new URL('/og.png', Astro.site);
 
-// Cookieless Umami analytics — rendered only when configured (see
+// Cookieless Umami analytics - rendered only when configured (see
 // analytics/README.md), so the default build ships no tracking at all.
 const umamiSrc = import.meta.env.PUBLIC_UMAMI_SRC as string | undefined;
 const umamiId = import.meta.env.PUBLIC_UMAMI_WEBSITE_ID as string | undefined;
 const analyticsEnabled = Boolean(umamiSrc && umamiId);
 
-// Person schema with role-wrapped work history (schema.org "role" pattern:
-// an EmployeeRole node between the Person and each Organization carries
-// roleName + dates).
-const jsonLd = {
+const personJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'Person',
   name: profile.name,
   jobTitle: profile.title,
   description: profile.tagline,
-  url: Astro.site?.toString(),
+  url: canonicalOrigin,
   email: `mailto:${contact.email}`,
   address: {
     '@type': 'PostalAddress',
@@ -41,21 +51,34 @@ const jsonLd = {
   },
   sameAs: [contact.linkedin, contact.github],
   knowsAbout,
-  alumniOf: education.map((e) => ({
+  alumniOf: education.map((entry) => ({
     '@type': 'CollegeOrUniversity',
-    name: e.institution,
+    name: entry.institution,
   })),
   worksFor: experiences
-    .filter((e) => e.end === null)
-    .map((e) => ({ '@type': 'Organization', name: e.company })),
-  hasOccupation: experiences.map((e) => ({
+    .filter((entry) => entry.end === null)
+    .map((entry) => ({ '@type': 'Organization', name: entry.company })),
+  hasOccupation: experiences.map((entry) => ({
     '@type': 'EmployeeRole',
-    roleName: e.role,
-    startDate: e.start,
-    ...(e.end ? { endDate: e.end } : {}),
-    worksFor: { '@type': 'Organization', name: e.company },
+    roleName: entry.role,
+    startDate: entry.start,
+    ...(entry.end ? { endDate: entry.end } : {}),
+    worksFor: { '@type': 'Organization', name: entry.company },
   })),
 };
+
+const websiteJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'casim.net',
+  url: canonicalOrigin,
+};
+
+const rawSchemas = [
+  ...(includePersonSchema ? [personJsonLd] : []),
+  ...(includeWebsiteSchema ? [websiteJsonLd] : []),
+  ...(Array.isArray(pageJsonLd) ? pageJsonLd : [pageJsonLd]),
+].filter(Boolean);
 ---
 
 <!doctype html>
@@ -77,14 +100,14 @@ const jsonLd = {
     <link rel="sitemap" href="/sitemap-index.xml" />
     <meta name="generator" content={Astro.generator} />
 
-    <meta property="og:type" content="profile" />
+    <meta property="og:type" content={ogType} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
     <meta property="og:image" content={ogImage} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content={`${profile.name} — ${profile.title}`} />
+    <meta property="og:image:alt" content={`${profile.name} - ${profile.title}`} />
     <meta property="og:site_name" content="casim.net" />
 
     <meta name="twitter:card" content="summary_large_image" />
@@ -92,11 +115,13 @@ const jsonLd = {
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImage} />
 
-    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+    {rawSchemas.map((schema) => (
+      <script type="application/ld+json" set:html={JSON.stringify(schema)} />
+    ))}
 
     {analyticsEnabled && (
       // crossorigin: the site runs cross-origin isolated (COEP require-corp,
-      // needed by WebLLM in the Flutter island) — the stats host must answer
+      // needed by WebLLM in the Flutter island) - the stats host must answer
       // CORS (see analytics/README.md).
       <script
         is:inline

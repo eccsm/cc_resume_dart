@@ -1,0 +1,234 @@
+---
+import Footer from '../../components/Footer.astro';
+import SiteNav from '../../components/SiteNav.astro';
+import {
+  caseStudies,
+  getCaseStudyCanonicalUrl,
+  getCaseStudyContext,
+  getCaseStudyPages,
+  getCaseStudyPath,
+  getCaseStudyPeriodLabel,
+  getCaseStudySeoDescription,
+  getCaseStudySeoTitle,
+  homepageCaseStudiesHref,
+} from '../../data/resume';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+export function getStaticPaths() {
+  return getCaseStudyPages().map(({ caseStudy, previous, next }) => ({
+    params: { slug: caseStudy.slug },
+    props: { caseStudy, previous, next },
+  }));
+}
+
+const { caseStudy, previous, next } = Astro.props;
+const title = getCaseStudySeoTitle(caseStudy);
+const description = getCaseStudySeoDescription(caseStudy);
+const canonicalUrl = getCaseStudyCanonicalUrl(caseStudy);
+const periodLabel = getCaseStudyPeriodLabel(caseStudy);
+const breadcrumbJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    {
+      '@type': 'ListItem',
+      position: 1,
+      name: 'Home',
+      item: 'https://casim.net/',
+    },
+    {
+      '@type': 'ListItem',
+      position: 2,
+      name: 'Case Studies',
+      item: `https://casim.net${homepageCaseStudiesHref}`,
+    },
+    {
+      '@type': 'ListItem',
+      position: 3,
+      name: caseStudy.title,
+      item: canonicalUrl,
+    },
+  ],
+};
+---
+
+<BaseLayout
+  title={title}
+  description={description}
+  ogType="article"
+  includePersonSchema={false}
+  includeWebsiteSchema={false}
+  pageJsonLd={breadcrumbJsonLd}
+>
+  <SiteNav homeHrefPrefix="/" isHome={false} />
+  <main id="main">
+    <section class="section case-study">
+      <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol>
+          <li><a href="/">Home</a></li>
+          <li><a href={homepageCaseStudiesHref}>Case Studies</a></li>
+          <li aria-current="page">{caseStudy.title}</li>
+        </ol>
+      </nav>
+
+      <p class="eyebrow">Case Study</p>
+      <h1>{caseStudy.title}</h1>
+      <p class="context">{getCaseStudyContext(caseStudy)}</p>
+      {periodLabel && <p class="period muted">{periodLabel}</p>}
+      <p class="summary">{caseStudy.summary}</p>
+
+      <ul class="chip-list" aria-label={`Technologies used for ${caseStudy.title}`}>
+        {caseStudy.stack.map((tech) => (
+          <li><span class="chip">{tech}</span></li>
+        ))}
+      </ul>
+
+      <div class="sections">
+        <section aria-labelledby="challenge-heading">
+          <h2 id="challenge-heading">Challenge</h2>
+          <p>{caseStudy.challenge}</p>
+        </section>
+
+        <section aria-labelledby="approach-heading">
+          <h2 id="approach-heading">Approach</h2>
+          <ul>
+            {caseStudy.approach.map((step) => (
+              <li>{step}</li>
+            ))}
+          </ul>
+        </section>
+
+        <section aria-labelledby="outcome-heading">
+          <h2 id="outcome-heading">Outcome</h2>
+          <p>{caseStudy.outcome}</p>
+        </section>
+      </div>
+
+      <p class="back-link">
+        <a class="button-secondary" href={homepageCaseStudiesHref}>
+          Back to the CV case-study overview
+        </a>
+      </p>
+
+      {(previous || next) && (
+        <nav class="case-study-nav" aria-label="Case study navigation">
+          {previous ? (
+            <a class="pager card" href={getCaseStudyPath(previous)}>
+              <span class="pager-label">Previous case study</span>
+              <span class="pager-title">{previous.title}</span>
+            </a>
+          ) : (
+            <span></span>
+          )}
+          {next ? (
+            <a class="pager card" href={getCaseStudyPath(next)}>
+              <span class="pager-label">Next case study</span>
+              <span class="pager-title">{next.title}</span>
+            </a>
+          ) : (
+            <span></span>
+          )}
+        </nav>
+      )}
+    </section>
+  </main>
+  <Footer interactiveLink={false} />
+</BaseLayout>
+
+<style>
+  .case-study {
+    max-width: 50rem;
+  }
+
+  .breadcrumbs {
+    margin-bottom: var(--space-5);
+  }
+
+  .breadcrumbs ol {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    color: var(--color-text-muted);
+    font-size: var(--text-small);
+  }
+
+  .breadcrumbs li:not(:last-child)::after {
+    content: '>';
+    margin-left: var(--space-2);
+  }
+
+  .eyebrow {
+    margin: 0 0 var(--space-2);
+    color: var(--color-text-muted);
+    font-size: var(--text-chip);
+    font-family: var(--font-mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: clamp(2.25rem, 5vw, 3rem);
+  }
+
+  .context,
+  .period {
+    margin: var(--space-2) 0 0;
+  }
+
+  .summary {
+    margin: var(--space-5) 0;
+    max-width: 42rem;
+    font-size: 1.0625rem;
+  }
+
+  .sections {
+    display: grid;
+    gap: var(--space-6);
+    margin-top: var(--space-6);
+  }
+
+  .sections section {
+    padding-top: var(--space-5);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .back-link {
+    margin: var(--space-6) 0 0;
+  }
+
+  .case-study-nav {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+    gap: var(--space-4);
+    margin-top: var(--space-6);
+  }
+
+  .pager {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    text-decoration: none;
+    color: var(--color-text);
+  }
+
+  .pager:hover,
+  .pager:focus-visible {
+    border-color: var(--color-accent);
+  }
+
+  .pager-label {
+    color: var(--color-text-muted);
+    font-size: var(--text-chip);
+    font-family: var(--font-mono);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .pager-title {
+    font-weight: 600;
+  }
+</style>
