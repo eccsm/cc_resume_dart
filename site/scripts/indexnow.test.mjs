@@ -5,10 +5,13 @@ import {
   MAX_URLS_PER_BATCH,
   chunkUrls,
   diffRemovedCaseStudyUrls,
+  diffRemovedProjectUrls,
   deriveRoutesFromChangedFiles,
   getCaseStudyUrlsFromResume,
   getIndexNowKeyLocation,
   getLegacyCaseStudyUrlsFromResume,
+  getLegacyProjectUrlsFromResume,
+  getProjectUrlsFromResume,
   loadSitemapUrls,
   normalizeIndexNowUrl,
   normalizeIndexableUrls,
@@ -108,7 +111,7 @@ test('loadSitemapUrls resolves nested sitemap files locally during dry runs', as
   ]);
 });
 
-test('current sitemap-style URL sets remain homepage plus canonical case-study pages only', () => {
+test('current sitemap-style URL sets remain homepage plus canonical project and case-study pages only', () => {
   const resume = {
     caseStudies: [
       { slug: 'allianz-core-transformation' },
@@ -116,6 +119,7 @@ test('current sitemap-style URL sets remain homepage plus canonical case-study p
       { slug: 'genai-hr-chatbot' },
       { slug: 'harmoni-modernization' },
     ],
+    projects: [{ slug: 'archmet' }, { slug: 'harmonova' }],
   };
 
   assert.deepEqual(getCaseStudyUrlsFromResume(resume), [
@@ -124,17 +128,23 @@ test('current sitemap-style URL sets remain homepage plus canonical case-study p
     'https://casim.net/case-studies/genai-hr-chatbot/',
     'https://casim.net/case-studies/harmoni-modernization/',
   ]);
+  assert.deepEqual(getProjectUrlsFromResume(resume), [
+    'https://casim.net/projects/archmet/',
+    'https://casim.net/projects/harmonova/',
+  ]);
 
   assert.deepEqual(
     normalizeIndexableUrls([
       'https://casim.net/',
       'https://casim.net/#experience',
+      'https://casim.net/#projects',
       'https://casim.net/#case-studies',
       'https://casim.net/assets/flutter/2b9f573/index.html',
+      ...getProjectUrlsFromResume(resume),
       ...getCaseStudyUrlsFromResume(resume),
       'https://casim.net/BingSiteAuth.xml',
     ]),
-    ['https://casim.net/', ...getCaseStudyUrlsFromResume(resume)]
+    ['https://casim.net/', ...getProjectUrlsFromResume(resume), ...getCaseStudyUrlsFromResume(resume)]
   );
 });
 
@@ -185,5 +195,22 @@ test('legacy case-study URLs are preserved for notifications after slug changes'
   ]);
   assert.deepEqual(getLegacyCaseStudyUrlsFromResume(currentResume), [
     'https://casim.net/case-studies/legacy-allianz/',
+  ]);
+});
+
+test('legacy project URLs are preserved for notifications after slug changes', () => {
+  const previousResume = {
+    projects: [{ slug: 'legacy-archmet' }, { slug: 'harmonova' }],
+  };
+  const currentResume = {
+    projects: [{ slug: 'archmet' }, { slug: 'harmonova' }],
+    projectRouteChanges: [{ fromSlug: 'legacy-archmet', toSlug: 'archmet' }],
+  };
+
+  assert.deepEqual(diffRemovedProjectUrls(previousResume, currentResume), [
+    'https://casim.net/projects/legacy-archmet/',
+  ]);
+  assert.deepEqual(getLegacyProjectUrlsFromResume(currentResume), [
+    'https://casim.net/projects/legacy-archmet/',
   ]);
 });

@@ -150,6 +150,11 @@ export function getCaseStudyUrlsFromResume(resume) {
   return caseStudies.map((caseStudy) => getCaseStudyUrlFromSlug(caseStudy.slug));
 }
 
+export function getProjectUrlsFromResume(resume) {
+  const projects = Array.isArray(resume?.projects) ? resume.projects : [];
+  return projects.map((project) => new URL(`/projects/${project.slug}/`, CANONICAL_ORIGIN).toString());
+}
+
 export function getLegacyCaseStudyUrlsFromResume(resume) {
   const routeChanges = Array.isArray(resume?.caseStudyRouteChanges)
     ? resume.caseStudyRouteChanges
@@ -157,9 +162,21 @@ export function getLegacyCaseStudyUrlsFromResume(resume) {
   return routeChanges.map((change) => getCaseStudyUrlFromSlug(change.fromSlug));
 }
 
+export function getLegacyProjectUrlsFromResume(resume) {
+  const routeChanges = Array.isArray(resume?.projectRouteChanges)
+    ? resume.projectRouteChanges
+    : [];
+  return routeChanges.map((change) => new URL(`/projects/${change.fromSlug}/`, CANONICAL_ORIGIN).toString());
+}
+
 export function diffRemovedCaseStudyUrls(previousResume, currentResume) {
   const currentUrls = new Set(getCaseStudyUrlsFromResume(currentResume));
   return getCaseStudyUrlsFromResume(previousResume).filter((url) => !currentUrls.has(url));
+}
+
+export function diffRemovedProjectUrls(previousResume, currentResume) {
+  const currentUrls = new Set(getProjectUrlsFromResume(currentResume));
+  return getProjectUrlsFromResume(previousResume).filter((url) => !currentUrls.has(url));
 }
 
 export function chunkUrls(urls, size = MAX_URLS_PER_BATCH) {
