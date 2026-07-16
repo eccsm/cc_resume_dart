@@ -33,11 +33,15 @@ node scripts/build.mjs        # flutter build web → copy into site/public → 
 
 Produces the deployable `site/dist/`. Requires Flutter and Node 20+.
 For site-only iteration (no Flutter island): `cd site && npm run build`.
+If `INDEXNOW_KEY` is present in the environment, the build also injects the
+temporary root verification file into the deployable artifact without
+committing it.
 
 ## CI
 
 - `.github/workflows/firebase-hosting-merge.yml` — full pipeline + deploy on
-  merge to master (Firebase Hosting, project `resume-63067`).
+  merge to master (Firebase Hosting, project `resume-63067`), then IndexNow
+  submission using the `INDEXNOW_KEY` GitHub secret.
 - `.github/workflows/firebase-hosting-pull-request.yml` — PR preview channel.
 - `.github/workflows/lighthouse-ci.yml` — perf/SEO/a11y/JS budgets on the
   static shell (Flutter assets are behind a user gesture and don't count).

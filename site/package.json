@@ -7,6 +7,11 @@
     "dev": "astro dev",
     "prebuild": "node scripts/generate-og.mjs && node scripts/emit-resume-json.mjs",
     "build": "astro build",
+    "prepare:indexnow": "node scripts/indexnow-key.mjs prepare",
+    "cleanup:indexnow": "node scripts/indexnow-key.mjs cleanup",
+    "submit:indexnow": "node scripts/submit-indexnow.mjs",
+    "submit:indexnow:dry-run": "node scripts/submit-indexnow.mjs --dry-run",
+    "test:indexnow": "node --test scripts/indexnow.test.mjs",
     "preview": "astro preview",
     "astro": "astro"
   },

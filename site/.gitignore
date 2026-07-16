@@ -9,4 +9,7 @@ public/og.png
 public/data/
 # Flutter island build output + manifest (root scripts/build.mjs)
 public/assets/flutter/
+# Generated at build time when INDEXNOW_KEY is set
+public/*.txt
+!public/robots.txt
 src/generated/

@@ -34,6 +34,7 @@ jobs:
       # RESUME_PHONE is optional; when unset the PDF omits the phone entry.
       - run: node scripts/build.mjs
         env:
+          INDEXNOW_KEY: ${{ secrets.INDEXNOW_KEY }}
           RESUME_PHONE: ${{ secrets.RESUME_PHONE }}
           PUBLIC_UMAMI_SRC: ${{ vars.PUBLIC_UMAMI_SRC }}
           PUBLIC_UMAMI_WEBSITE_ID: ${{ vars.PUBLIC_UMAMI_WEBSITE_ID }}
@@ -44,3 +45,13 @@ jobs:
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_RESUME_63067 }}
           channelId: live
           projectId: resume-63067
+
+      - id: indexnow
+        continue-on-error: true
+        run: npm run submit:indexnow -- --changed-from "${{ github.event.before }}" --changed-to "${{ github.sha }}" --sitemap dist/sitemap-index.xml
+        working-directory: site
+        env:
+          INDEXNOW_KEY: ${{ secrets.INDEXNOW_KEY }}
+
+      - if: ${{ always() && steps.indexnow.outcome == 'failure' }}
+        run: echo "::warning::IndexNow submission failed after a successful production deploy. Review the IndexNow step logs."
