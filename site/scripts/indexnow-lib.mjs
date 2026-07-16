@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises';
-import { extname, resolve } from 'node:path';
+import { basename, dirname, extname, resolve } from 'node:path';
 
 export const INDEXNOW_HOST = 'casim.net';
 export const CANONICAL_ORIGIN = new URL(`https://${INDEXNOW_HOST}/`);
@@ -41,6 +41,7 @@ const SITE_WIDE_CHANGE_PREFIXES = [
   'site/src/components/',
   'site/src/data/',
   'site/src/layouts/',
+  'site/src/pages/',
   'site/public/',
   'site/scripts/',
 ];
@@ -136,6 +137,31 @@ export function normalizeIndexableUrls(inputs, options) {
   return urls;
 }
 
+export function getCaseStudyPathFromSlug(slug) {
+  return `/case-studies/${slug}/`;
+}
+
+export function getCaseStudyUrlFromSlug(slug) {
+  return new URL(getCaseStudyPathFromSlug(slug), CANONICAL_ORIGIN).toString();
+}
+
+export function getCaseStudyUrlsFromResume(resume) {
+  const caseStudies = Array.isArray(resume?.caseStudies) ? resume.caseStudies : [];
+  return caseStudies.map((caseStudy) => getCaseStudyUrlFromSlug(caseStudy.slug));
+}
+
+export function getLegacyCaseStudyUrlsFromResume(resume) {
+  const routeChanges = Array.isArray(resume?.caseStudyRouteChanges)
+    ? resume.caseStudyRouteChanges
+    : [];
+  return routeChanges.map((change) => getCaseStudyUrlFromSlug(change.fromSlug));
+}
+
+export function diffRemovedCaseStudyUrls(previousResume, currentResume) {
+  const currentUrls = new Set(getCaseStudyUrlsFromResume(currentResume));
+  return getCaseStudyUrlsFromResume(previousResume).filter((url) => !currentUrls.has(url));
+}
+
 export function chunkUrls(urls, size = MAX_URLS_PER_BATCH) {
   if (!Number.isInteger(size) || size <= 0) {
     throw new Error('IndexNow batch size must be a positive integer.');
@@ -180,7 +206,7 @@ export async function loadSitemapUrls(source, { loadText = defaultLoadText, seen
 
   const urls = [];
   for (const loc of locs) {
-    urls.push(...(await loadSitemapUrls(loc, { loadText, seen })));
+    urls.push(...(await loadSitemapUrls(resolveNestedSitemapSource(normalizedSource, loc), { loadText, seen })));
   }
   return urls;
 }
@@ -268,4 +294,16 @@ function normalizeSitemapSource(source) {
     return value;
   }
   return resolve(value);
+}
+
+function resolveNestedSitemapSource(parentSource, childSource) {
+  if (/^https?:\/\//i.test(parentSource)) {
+    return childSource;
+  }
+
+  if (/^https?:\/\//i.test(childSource)) {
+    return resolve(dirname(parentSource), basename(new URL(childSource).pathname));
+  }
+
+  return resolve(dirname(parentSource), childSource);
 }

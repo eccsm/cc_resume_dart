@@ -4,8 +4,11 @@ import test from 'node:test';
 import {
   MAX_URLS_PER_BATCH,
   chunkUrls,
+  diffRemovedCaseStudyUrls,
   deriveRoutesFromChangedFiles,
+  getCaseStudyUrlsFromResume,
   getIndexNowKeyLocation,
+  getLegacyCaseStudyUrlsFromResume,
   loadSitemapUrls,
   normalizeIndexNowUrl,
   normalizeIndexableUrls,
@@ -34,7 +37,7 @@ test('normalizeIndexNowUrl forces https, strips fragments, and rejects non-canon
 test('normalizeIndexableUrls deduplicates URLs and filters assets and verification files', () => {
   const urls = normalizeIndexableUrls([
     '/',
-    'https://casim.net/#hero',
+    'https://casim.net/#case-studies',
     'https://casim.net/assets/flutter/hash/index.html',
     'https://casim.net/robots.txt',
     'https://casim.net/about/',
@@ -77,6 +80,64 @@ test('parseSitemap and loadSitemapUrls support sitemap indexes and urlsets', asy
   assert.deepEqual(urls, ['https://casim.net/', 'https://casim.net/about/']);
 });
 
+test('loadSitemapUrls resolves nested sitemap files locally during dry runs', async () => {
+  const files = new Map([
+    [
+      'C:/site/dist/sitemap-index.xml',
+      '<?xml version="1.0"?><sitemapindex><sitemap><loc>https://casim.net/sitemap-0.xml</loc></sitemap></sitemapindex>',
+    ],
+    [
+      'C:/site/dist/sitemap-0.xml',
+      '<?xml version="1.0"?><urlset><url><loc>https://casim.net/</loc></url><url><loc>https://casim.net/case-studies/allianz-core-transformation/</loc></url></urlset>',
+    ],
+  ]);
+
+  const urls = await loadSitemapUrls('C:/site/dist/sitemap-index.xml', {
+    loadText: async (source) => {
+      const match = files.get(source.replaceAll('\\', '/'));
+      if (!match) {
+        throw new Error(`Unexpected sitemap source: ${source}`);
+      }
+      return match;
+    },
+  });
+
+  assert.deepEqual(urls, [
+    'https://casim.net/',
+    'https://casim.net/case-studies/allianz-core-transformation/',
+  ]);
+});
+
+test('current sitemap-style URL sets remain homepage plus canonical case-study pages only', () => {
+  const resume = {
+    caseStudies: [
+      { slug: 'allianz-core-transformation' },
+      { slug: 'insurance-ddd-kafka' },
+      { slug: 'genai-hr-chatbot' },
+      { slug: 'harmoni-modernization' },
+    ],
+  };
+
+  assert.deepEqual(getCaseStudyUrlsFromResume(resume), [
+    'https://casim.net/case-studies/allianz-core-transformation/',
+    'https://casim.net/case-studies/insurance-ddd-kafka/',
+    'https://casim.net/case-studies/genai-hr-chatbot/',
+    'https://casim.net/case-studies/harmoni-modernization/',
+  ]);
+
+  assert.deepEqual(
+    normalizeIndexableUrls([
+      'https://casim.net/',
+      'https://casim.net/#experience',
+      'https://casim.net/#case-studies',
+      'https://casim.net/assets/flutter/2b9f573/index.html',
+      ...getCaseStudyUrlsFromResume(resume),
+      'https://casim.net/BingSiteAuth.xml',
+    ]),
+    ['https://casim.net/', ...getCaseStudyUrlsFromResume(resume)]
+  );
+});
+
 test('deriveRoutesFromChangedFiles maps static Astro pages and falls back for site-wide changes', () => {
   assert.deepEqual(
     deriveRoutesFromChangedFiles([
@@ -93,7 +154,8 @@ test('deriveRoutesFromChangedFiles maps static Astro pages and falls back for si
     shouldFallbackToSitemap(['site/src/components/Hero.astro', 'README.md']),
     true
   );
-  assert.equal(shouldFallbackToSitemap(['site/src/pages/about.astro']), false);
+  assert.equal(shouldFallbackToSitemap(['site/src/pages/case-studies/[slug].astro']), true);
+  assert.equal(shouldFallbackToSitemap(['site/src/pages/about.astro']), true);
 });
 
 test('getIndexNowKeyLocation builds the canonical verification URL', () => {
@@ -101,4 +163,27 @@ test('getIndexNowKeyLocation builds the canonical verification URL', () => {
     getIndexNowKeyLocation('abc12345-KEY'),
     'https://casim.net/abc12345-KEY.txt'
   );
+});
+
+test('legacy case-study URLs are preserved for notifications after slug changes', () => {
+  const previousResume = {
+    caseStudies: [
+      { slug: 'legacy-allianz' },
+      { slug: 'insurance-ddd-kafka' },
+    ],
+  };
+  const currentResume = {
+    caseStudies: [
+      { slug: 'allianz-core-transformation' },
+      { slug: 'insurance-ddd-kafka' },
+    ],
+    caseStudyRouteChanges: [{ fromSlug: 'legacy-allianz', toSlug: 'allianz-core-transformation' }],
+  };
+
+  assert.deepEqual(diffRemovedCaseStudyUrls(previousResume, currentResume), [
+    'https://casim.net/case-studies/legacy-allianz/',
+  ]);
+  assert.deepEqual(getLegacyCaseStudyUrlsFromResume(currentResume), [
+    'https://casim.net/case-studies/legacy-allianz/',
+  ]);
 });

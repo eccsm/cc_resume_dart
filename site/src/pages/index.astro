@@ -1,21 +1,27 @@
 ---
-import BaseLayout from '../layouts/BaseLayout.astro';
-import SiteNav from '../components/SiteNav.astro';
-import Hero from '../components/Hero.astro';
-import Experience from '../components/Experience.astro';
 import CaseStudies from '../components/CaseStudies.astro';
-import Skills from '../components/Skills.astro';
-import Education from '../components/Education.astro';
 import Contact from '../components/Contact.astro';
+import Education from '../components/Education.astro';
+import Experience from '../components/Experience.astro';
 import FlutterIsland from '../components/FlutterIsland.astro';
 import Footer from '../components/Footer.astro';
+import Hero from '../components/Hero.astro';
+import SiteNav from '../components/SiteNav.astro';
+import Skills from '../components/Skills.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
 import { profile } from '../data/resume';
 
-const title = `${profile.name} — ${profile.title}`;
+const title = `${profile.name} - ${profile.title}`;
 const description = profile.tagline;
 ---
 
-<BaseLayout title={title} description={description}>
+<BaseLayout
+  title={title}
+  description={description}
+  ogType="profile"
+  includePersonSchema={true}
+  includeWebsiteSchema={true}
+>
   <SiteNav />
   <main id="main">
     <Hero />

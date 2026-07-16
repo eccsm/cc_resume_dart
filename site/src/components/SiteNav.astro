@@ -1,16 +1,23 @@
 ---
+interface Props {
+  homeHrefPrefix?: string;
+  isHome?: boolean;
+}
+
+const { homeHrefPrefix = '', isHome = true } = Astro.props;
 const links = [
-  { href: '#experience', label: 'Experience' },
-  { href: '#case-studies', label: 'Case Studies' },
-  { href: '#skills', label: 'Skills' },
-  { href: '#education', label: 'Education' },
-  { href: '#contact', label: 'Contact' },
+  { href: `${homeHrefPrefix}#experience`, label: 'Experience' },
+  { href: `${homeHrefPrefix}#case-studies`, label: 'Case Studies' },
+  { href: `${homeHrefPrefix}#skills`, label: 'Skills' },
+  { href: `${homeHrefPrefix}#education`, label: 'Education' },
+  { href: `${homeHrefPrefix}#contact`, label: 'Contact' },
 ];
+const brandHref = isHome ? '#top' : '/';
 ---
 
 <header class="site-header">
   <nav aria-label="Section navigation">
-    <a class="brand" href="#top">Ekincan Casim</a>
+    <a class="brand" href={brandHref}>Ekincan Casim</a>
     <ul>
       {links.map(({ href, label }) => (
         <li><a href={href}>{label}</a></li>
@@ -146,7 +153,6 @@ const links = [
     color: var(--color-accent);
   }
 
-  /* Show the icon for the theme you would switch TO */
   .icon-sun {
     display: none;
   }
@@ -160,15 +166,15 @@ const links = [
   }
 </style>
 
-<style is:global>
-  /* Active nav marker (accent): pure CSS via :target — no scroll-spy JS.
-     Highlights the nav link for the section last jumped to. */
-  body:has(#experience:target) nav a[href='#experience'],
-  body:has(#case-studies:target) nav a[href='#case-studies'],
-  body:has(#skills:target) nav a[href='#skills'],
-  body:has(#education:target) nav a[href='#education'],
-  body:has(#contact:target) nav a[href='#contact'] {
-    color: var(--color-accent);
-    border-bottom-color: var(--color-accent-fill);
-  }
-</style>
+{isHome && (
+  <style is:global>
+    body:has(#experience:target) nav a[href='#experience'],
+    body:has(#case-studies:target) nav a[href='#case-studies'],
+    body:has(#skills:target) nav a[href='#skills'],
+    body:has(#education:target) nav a[href='#education'],
+    body:has(#contact:target) nav a[href='#contact'] {
+      color: var(--color-accent);
+      border-bottom-color: var(--color-accent-fill);
+    }
+  </style>
+)}

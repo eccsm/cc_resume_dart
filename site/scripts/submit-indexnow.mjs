@@ -9,19 +9,28 @@ import {
   INDEXNOW_HOST,
   MAX_URLS_PER_BATCH,
   chunkUrls,
+  diffRemovedCaseStudyUrls,
   deriveRoutesFromChangedFiles,
+  getCaseStudyUrlsFromResume,
   getIndexNowKeyLocation,
+  getLegacyCaseStudyUrlsFromResume,
   loadSitemapUrls,
   normalizeIndexableUrls,
   shouldFallbackToSitemap,
   validateIndexNowKey,
 } from './indexnow-lib.mjs';
+import {
+  loadGeneratedResumeJson,
+  loadResumeModuleFromText,
+  toResumeJson,
+} from './resume-data.mjs';
 
 const project = join(dirname(fileURLToPath(import.meta.url)), '..');
 const repoRoot = join(project, '..');
 const args = parseArgs(process.argv.slice(2));
 const key = validateIndexNowKey(process.env.INDEXNOW_KEY);
 const keyLocation = getIndexNowKeyLocation(key);
+const currentResume = await loadCurrentResumeSnapshot();
 
 const explicitInputs = [...args.urls, ...args.routes];
 let strategy = 'explicit';
@@ -30,14 +39,23 @@ let candidateInputs = explicitInputs;
 if (candidateInputs.length === 0 && args.changedFrom && args.changedTo) {
   const changedFiles = getChangedFiles(args.changedFrom, args.changedTo);
   const changedRoutes = deriveRoutesFromChangedFiles(changedFiles);
+  const legacyNotificationInputs = await getLegacyNotificationInputs(
+    changedFiles,
+    args.changedFrom,
+    currentResume
+  );
 
   if (changedRoutes.length > 0 && !shouldFallbackToSitemap(changedFiles)) {
     strategy = 'changed-routes';
-    candidateInputs = changedRoutes;
+    candidateInputs = [...changedRoutes, ...legacyNotificationInputs];
   } else if (shouldFallbackToSitemap(changedFiles)) {
     strategy = 'sitemap-fallback';
+    const sitemapSource = args.sitemap || defaultSitemapPath();
+    candidateInputs = [...(await loadSitemapUrls(sitemapSource)), ...legacyNotificationInputs];
   } else if (changedFiles.length === 0) {
     strategy = 'sitemap-fallback';
+    const sitemapSource = args.sitemap || defaultSitemapPath();
+    candidateInputs = await loadSitemapUrls(sitemapSource);
   } else {
     console.log('No indexable canonical route changes detected; skipping IndexNow submission.');
     process.exit(0);
@@ -174,4 +192,56 @@ function getChangedFiles(from, to) {
 function defaultSitemapPath() {
   const sitemap = join(project, 'dist', 'sitemap-index.xml');
   return existsSync(sitemap) ? sitemap : new URL('/sitemap-index.xml', CANONICAL_ORIGIN).toString();
+}
+
+async function loadCurrentResumeSnapshot() {
+  const candidates = [
+    join(project, 'public', 'data', 'resume.json'),
+    join(project, 'dist', 'data', 'resume.json'),
+  ];
+
+  for (const candidate of candidates) {
+    if (existsSync(candidate)) {
+      return await loadGeneratedResumeJson(candidate);
+    }
+  }
+
+  return null;
+}
+
+async function getLegacyNotificationInputs(changedFiles, fromRef, currentSnapshot) {
+  const normalizedFiles = changedFiles.map((file) => file.replaceAll('\\', '/'));
+  if (!normalizedFiles.includes('site/src/data/resume.ts')) {
+    return [];
+  }
+
+  const previousSnapshot = await loadResumeSnapshotFromGit(fromRef);
+  if (!previousSnapshot || !currentSnapshot) {
+    return [];
+  }
+
+  const removedUrls = diffRemovedCaseStudyUrls(previousSnapshot, currentSnapshot);
+  const configuredLegacyUrls = getLegacyCaseStudyUrlsFromResume(currentSnapshot);
+  const currentCaseStudyUrls = new Set(getCaseStudyUrlsFromResume(currentSnapshot));
+
+  return [...new Set([...configuredLegacyUrls, ...removedUrls])].filter(
+    (url) => !currentCaseStudyUrls.has(url)
+  );
+}
+
+async function loadResumeSnapshotFromGit(ref) {
+  if (!ref || /^0+$/.test(ref)) {
+    return null;
+  }
+
+  try {
+    const source = execFileSync('git', ['show', `${ref}:site/src/data/resume.ts`], {
+      cwd: repoRoot,
+      encoding: 'utf8',
+    });
+    const moduleData = await loadResumeModuleFromText(source);
+    return toResumeJson(moduleData);
+  } catch {
+    return null;
+  }
 }
