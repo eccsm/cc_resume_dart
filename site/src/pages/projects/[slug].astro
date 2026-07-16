@@ -1,0 +1,429 @@
+---
+import Footer from '../../components/Footer.astro';
+import SiteNav from '../../components/SiteNav.astro';
+import {
+  getCaseStudyBySlug,
+  getCaseStudyPath,
+  getProjectCanonicalUrl,
+  getProjectPages,
+  getProjectPath,
+  getProjectSeoDescription,
+  getProjectSeoTitle,
+  homepageProjectsHref,
+} from '../../data/resume';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+export function getStaticPaths() {
+  return getProjectPages().map(({ project, previous, next }) => ({
+    params: { slug: project.slug },
+    props: { project, previous, next },
+  }));
+}
+
+const { project, previous, next } = Astro.props;
+const title = getProjectSeoTitle(project);
+const description = getProjectSeoDescription(project);
+const canonicalUrl = getProjectCanonicalUrl(project);
+const statusLabels = {
+  documented: 'Documented scope',
+  optional: 'Optional',
+  experimental: 'Experimental',
+  planned: 'Planned',
+} as const;
+const relatedCaseStudies = project.relatedCaseStudySlugs
+  .map((slug) => getCaseStudyBySlug(slug))
+  .filter(Boolean);
+const breadcrumbJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    {
+      '@type': 'ListItem',
+      position: 1,
+      name: 'Home',
+      item: 'https://casim.net/',
+    },
+    {
+      '@type': 'ListItem',
+      position: 2,
+      name: 'Projects',
+      item: `https://casim.net${homepageProjectsHref}`,
+    },
+    {
+      '@type': 'ListItem',
+      position: 3,
+      name: project.name,
+      item: canonicalUrl,
+    },
+  ],
+};
+---
+
+<BaseLayout
+  title={title}
+  description={description}
+  ogType="article"
+  robots="index,follow"
+  includePersonSchema={false}
+  includeWebsiteSchema={false}
+  pageJsonLd={breadcrumbJsonLd}
+>
+  <SiteNav homeHrefPrefix="/" isHome={false} />
+  <main id="main">
+    <section class="section project-detail">
+      <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol>
+          <li><a href="/">Home</a></li>
+          <li><a href={homepageProjectsHref}>Projects</a></li>
+          <li aria-current="page">{project.name}</li>
+        </ol>
+      </nav>
+
+      <p class="eyebrow">Project</p>
+      <h1>{project.name}</h1>
+      <p class="tagline">{project.tagline}</p>
+      {project.supportingMessage && <p class="supporting-message">{project.supportingMessage}</p>}
+
+      <div class="meta-row">
+        <p class="status-badge">{project.statusLabel}</p>
+        <p class="muted">Role: {project.role}</p>
+      </div>
+
+      <div class="summary">
+        {project.executiveSummary.map((paragraph) => (
+          <p>{paragraph}</p>
+        ))}
+      </div>
+
+      <div class="top-links">
+        <a class="button-secondary" href={homepageProjectsHref}>
+          Back to the homepage projects overview
+        </a>
+      </div>
+
+      <div class="detail-grid">
+        <section aria-labelledby="problem-heading">
+          <h2 id="problem-heading">Problem</h2>
+          {project.problem.map((paragraph) => (
+            <p>{paragraph}</p>
+          ))}
+        </section>
+
+        <section aria-labelledby="approach-heading">
+          <h2 id="approach-heading">Approach</h2>
+          {project.solution.map((paragraph) => (
+            <p>{paragraph}</p>
+          ))}
+          <ul>
+            {project.differentiators.map((item) => (
+              <li>{item}</li>
+            ))}
+          </ul>
+        </section>
+
+        <section aria-labelledby="architecture-heading">
+          <h2 id="architecture-heading">Architecture</h2>
+          {project.architecture.map((paragraph) => (
+            <p>{paragraph}</p>
+          ))}
+          <div class="module-grid">
+            {project.modules.map((module) => (
+              <article class="card module-card">
+                <p class="mini-status">{statusLabels[module.status]}</p>
+                <h3>{module.name}</h3>
+                <p>{module.summary}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section aria-labelledby="decisions-heading">
+          <h2 id="decisions-heading">Key Decisions</h2>
+          <div class="decision-grid">
+            {project.keyDecisions.map((decision) => (
+              <article class="card">
+                <h3>{decision.title}</h3>
+                <p>{decision.detail}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section aria-labelledby="tradeoffs-heading">
+          <h2 id="tradeoffs-heading">Tradeoffs</h2>
+          <div class="decision-grid">
+            {project.tradeoffs.map((tradeoff) => (
+              <article class="card">
+                <h3>{tradeoff.title}</h3>
+                <p>{tradeoff.detail}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section aria-labelledby="capabilities-heading">
+          <h2 id="capabilities-heading">Current Capabilities</h2>
+          <div class="capability-list">
+            {project.currentCapabilities.map((capability) => (
+              <article class="card capability-card">
+                <div class="capability-header">
+                  <h3>{capability.title}</h3>
+                  <span class="mini-status">{statusLabels[capability.status]}</span>
+                </div>
+                <p>{capability.detail}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        {project.plannedCapabilities && project.plannedCapabilities.length > 0 && (
+          <section aria-labelledby="planned-heading">
+            <h2 id="planned-heading">Planned Or Optional Scope</h2>
+            <div class="capability-list">
+              {project.plannedCapabilities.map((capability) => (
+                <article class="card capability-card">
+                  <div class="capability-header">
+                    <h3>{capability.title}</h3>
+                    <span class="mini-status">{statusLabels[capability.status]}</span>
+                  </div>
+                  <p>{capability.detail}</p>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
+
+        <section aria-labelledby="technology-heading">
+          <h2 id="technology-heading">Technology Stack</h2>
+          <ul class="chip-list" aria-label={`Technologies used in ${project.name}`}>
+            {project.technologies.map((tech) => (
+              <li><span class="chip">{tech}</span></li>
+            ))}
+          </ul>
+        </section>
+
+        {project.privacyOrSecurity && project.privacyOrSecurity.length > 0 && (
+          <section aria-labelledby="privacy-heading">
+            <h2 id="privacy-heading">{project.privacyOrSecurityTitle ?? 'Privacy and security'}</h2>
+            <ul>
+              {project.privacyOrSecurity.map((item) => (
+                <li>{item}</li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        <section aria-labelledby="status-heading">
+          <h2 id="status-heading">Current Status</h2>
+          <p>{project.statusNote}</p>
+          {project.namingNote && <p class="muted">{project.namingNote}</p>}
+        </section>
+
+        {((project.repositoryLinks && project.repositoryLinks.length > 0) ||
+          (project.documentationLinks && project.documentationLinks.length > 0)) && (
+          <section aria-labelledby="links-heading">
+            <h2 id="links-heading">Verified Links</h2>
+            <ul class="link-list">
+              {project.repositoryLinks?.map((link) => (
+                <li>
+                  <a href={link.url} target="_blank" rel="noreferrer noopener">
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+              {project.documentationLinks?.map((link) => (
+                <li>
+                  <a href={link.url} target="_blank" rel="noreferrer noopener">
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {relatedCaseStudies.length > 0 && (
+          <section aria-labelledby="related-case-studies-heading">
+            <h2 id="related-case-studies-heading">Related Case Studies</h2>
+            <ul class="related-list">
+              {relatedCaseStudies.map((caseStudy) => (
+                <li>
+                  <a href={getCaseStudyPath(caseStudy)}>
+                    Read the {caseStudy.title} case study
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+      </div>
+
+      {(previous || next) && (
+        <nav class="project-nav" aria-label="Project navigation">
+          {previous ? (
+            <a class="pager card" href={getProjectPath(previous)}>
+              <span class="pager-label">Previous project</span>
+              <span class="pager-title">{previous.name}</span>
+            </a>
+          ) : (
+            <span></span>
+          )}
+          {next ? (
+            <a class="pager card" href={getProjectPath(next)}>
+              <span class="pager-label">Next project</span>
+              <span class="pager-title">{next.name}</span>
+            </a>
+          ) : (
+            <span></span>
+          )}
+        </nav>
+      )}
+    </section>
+  </main>
+  <Footer interactiveLink={false} />
+</BaseLayout>
+
+<style>
+  .project-detail {
+    max-width: 58rem;
+  }
+
+  .breadcrumbs {
+    margin-bottom: var(--space-5);
+  }
+
+  .breadcrumbs ol {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    color: var(--color-text-muted);
+    font-size: var(--text-small);
+  }
+
+  .breadcrumbs li:not(:last-child)::after {
+    content: '>';
+    margin-left: var(--space-2);
+  }
+
+  .eyebrow {
+    margin: 0 0 var(--space-2);
+    color: var(--color-text-muted);
+    font-size: var(--text-chip);
+    font-family: var(--font-mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: clamp(2.25rem, 5vw, 3rem);
+  }
+
+  .tagline {
+    margin: var(--space-3) 0 0;
+    font-size: var(--text-h3);
+    color: var(--color-text-muted);
+  }
+
+  .supporting-message {
+    margin: var(--space-2) 0 0;
+    font-weight: 600;
+  }
+
+  .meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3) var(--space-4);
+    align-items: center;
+    margin: var(--space-4) 0 0;
+  }
+
+  .status-badge,
+  .mini-status {
+    display: inline-block;
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-chip);
+    background: var(--color-chip-bg);
+    color: var(--color-chip-text);
+    font-family: var(--font-mono);
+    font-size: var(--text-chip);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .summary {
+    margin-top: var(--space-5);
+    max-width: 46rem;
+  }
+
+  .top-links {
+    margin-top: var(--space-5);
+  }
+
+  .detail-grid {
+    display: grid;
+    gap: var(--space-6);
+    margin-top: var(--space-6);
+  }
+
+  .detail-grid section {
+    padding-top: var(--space-5);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .module-grid,
+  .decision-grid,
+  .capability-list,
+  .project-nav {
+    display: grid;
+    gap: var(--space-4);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  }
+
+  .module-card,
+  .capability-card {
+    display: grid;
+    gap: var(--space-3);
+  }
+
+  .capability-header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: var(--space-2) var(--space-4);
+    align-items: start;
+  }
+
+  .link-list,
+  .related-list {
+    margin: 0;
+  }
+
+  .pager {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    text-decoration: none;
+    color: var(--color-text);
+  }
+
+  .pager:hover,
+  .pager:focus-visible {
+    border-color: var(--color-accent);
+  }
+
+  .pager-label {
+    color: var(--color-text-muted);
+    font-size: var(--text-chip);
+    font-family: var(--font-mono);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .pager-title {
+    font-weight: 600;
+  }
+ </style>

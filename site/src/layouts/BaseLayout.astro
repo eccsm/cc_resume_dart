@@ -13,6 +13,7 @@ interface Props {
   title: string;
   description: string;
   ogType?: string;
+  robots?: string;
   includePersonSchema?: boolean;
   includeWebsiteSchema?: boolean;
   pageJsonLd?: Record<string, unknown> | Record<string, unknown>[];
@@ -22,6 +23,7 @@ const {
   title,
   description,
   ogType = 'website',
+  robots,
   includePersonSchema = false,
   includeWebsiteSchema = false,
   pageJsonLd = [],
@@ -88,6 +90,7 @@ const rawSchemas = [
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     <meta name="description" content={description} />
+    {robots && <meta name="robots" content={robots} />}
     <link rel="canonical" href={canonical} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link

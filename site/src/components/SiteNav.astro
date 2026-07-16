@@ -8,6 +8,7 @@ const { homeHrefPrefix = '', isHome = true } = Astro.props;
 const links = [
   { href: `${homeHrefPrefix}#experience`, label: 'Experience' },
   { href: `${homeHrefPrefix}#case-studies`, label: 'Case Studies' },
+  { href: `${homeHrefPrefix}#projects`, label: 'Projects' },
   { href: `${homeHrefPrefix}#skills`, label: 'Skills' },
   { href: `${homeHrefPrefix}#education`, label: 'Education' },
   { href: `${homeHrefPrefix}#contact`, label: 'Contact' },
@@ -170,6 +171,7 @@ const brandHref = isHome ? '#top' : '/';
   <style is:global>
     body:has(#experience:target) nav a[href='#experience'],
     body:has(#case-studies:target) nav a[href='#case-studies'],
+    body:has(#projects:target) nav a[href='#projects'],
     body:has(#skills:target) nav a[href='#skills'],
     body:has(#education:target) nav a[href='#education'],
     body:has(#contact:target) nav a[href='#contact'] {

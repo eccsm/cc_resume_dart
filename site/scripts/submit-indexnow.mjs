@@ -10,10 +10,13 @@ import {
   MAX_URLS_PER_BATCH,
   chunkUrls,
   diffRemovedCaseStudyUrls,
+  diffRemovedProjectUrls,
   deriveRoutesFromChangedFiles,
   getCaseStudyUrlsFromResume,
   getIndexNowKeyLocation,
   getLegacyCaseStudyUrlsFromResume,
+  getLegacyProjectUrlsFromResume,
+  getProjectUrlsFromResume,
   loadSitemapUrls,
   normalizeIndexableUrls,
   shouldFallbackToSitemap,
@@ -223,10 +226,18 @@ async function getLegacyNotificationInputs(changedFiles, fromRef, currentSnapsho
   const removedUrls = diffRemovedCaseStudyUrls(previousSnapshot, currentSnapshot);
   const configuredLegacyUrls = getLegacyCaseStudyUrlsFromResume(currentSnapshot);
   const currentCaseStudyUrls = new Set(getCaseStudyUrlsFromResume(currentSnapshot));
+  const removedProjectUrls = diffRemovedProjectUrls(previousSnapshot, currentSnapshot);
+  const configuredLegacyProjectUrls = getLegacyProjectUrlsFromResume(currentSnapshot);
+  const currentProjectUrls = new Set(getProjectUrlsFromResume(currentSnapshot));
 
-  return [...new Set([...configuredLegacyUrls, ...removedUrls])].filter(
-    (url) => !currentCaseStudyUrls.has(url)
-  );
+  return [
+    ...new Set([
+      ...configuredLegacyUrls,
+      ...removedUrls,
+      ...configuredLegacyProjectUrls,
+      ...removedProjectUrls,
+    ]),
+  ].filter((url) => !currentCaseStudyUrls.has(url) && !currentProjectUrls.has(url));
 }
 
 async function loadResumeSnapshotFromGit(ref) {

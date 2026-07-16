@@ -6,7 +6,7 @@ const project = join(dirname(fileURLToPath(import.meta.url)), '..');
 const resumeSourcePath = join(project, 'src', 'data', 'resume.ts');
 const generatedResumePath = join(project, 'public', 'data', 'resume.json');
 
-export const RESUME_JSON_SCHEMA_VERSION = 3;
+export const RESUME_JSON_SCHEMA_VERSION = 4;
 
 export async function loadResumeModuleFromFile(filePath = resumeSourcePath) {
   const source = await readFile(filePath, 'utf8');
@@ -29,10 +29,13 @@ export function toResumeJson(data) {
     schemaVersion: RESUME_JSON_SCHEMA_VERSION,
     canonicalOrigin: data.canonicalOrigin,
     homepageCaseStudiesHref: data.homepageCaseStudiesHref,
+    homepageProjectsHref: data.homepageProjectsHref,
     profile: data.profile,
     experiences: data.experiences,
     caseStudies: data.caseStudies,
     caseStudyRouteChanges: data.caseStudyRouteChanges ?? [],
+    projects: data.projects ?? [],
+    projectRouteChanges: data.projectRouteChanges ?? [],
     skills: data.skills,
     skillLevels: data.skillLevels,
     education: data.education,
@@ -42,4 +45,3 @@ export function toResumeJson(data) {
     knowsAbout: data.knowsAbout,
   };
 }
-
