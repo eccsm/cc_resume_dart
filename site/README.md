@@ -41,7 +41,7 @@ number or other PII to this file.**
   It runs automatically via the `prebuild` script.
 - JSON-LD (Person + EmployeeRole work history), OpenGraph/Twitter meta, and
   sitemap are wired in `src/layouts/BaseLayout.astro` and
-  `astro.config.mjs` (`site: https://casim.net`).
+  `astro.config.mjs` (`site: https://ekincan.casim.net`).
 - IndexNow uses `scripts/indexnow-key.mjs` to create a temporary
   `public/<INDEXNOW_KEY>.txt` only during builds where `INDEXNOW_KEY` is set.
   The root pipeline cleans that file back out of `public/` after `dist/`
@@ -70,8 +70,8 @@ hides itself when no Flutter build manifest is present.
 Configure the repository secret `INDEXNOW_KEY` in GitHub Actions. The
 production deploy uses it in two places:
 
-- before `astro build`, to stage `https://casim.net/<INDEXNOW_KEY>.txt` into
-  the deployable artifact
+- before `astro build`, to stage
+  `https://ekincan.casim.net/<INDEXNOW_KEY>.txt` into the deployable artifact
 - after a successful Firebase live deploy, to POST canonical URLs to
   `https://api.indexnow.org/indexnow`
 
@@ -88,7 +88,7 @@ INDEXNOW_KEY=your-key npm run submit:indexnow -- --sitemap dist/sitemap-index.xm
 Manual verification:
 
 - build with `INDEXNOW_KEY` set and confirm `dist/<INDEXNOW_KEY>.txt` exists
-- after deploy, open `https://casim.net/<INDEXNOW_KEY>.txt`
+- after deploy, open `https://ekincan.casim.net/<INDEXNOW_KEY>.txt`
 - optionally run the dry-run command above to inspect the exact canonical URLs
   that would be submitted
 

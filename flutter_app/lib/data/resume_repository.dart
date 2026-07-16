@@ -23,11 +23,11 @@ class ResumeRepository {
 
   static Future<Resume> _fetch() async {
     // Embedded in the Astro shell, Uri.base is the host page origin, so this
-    // resolves to casim.net/data/resume.json. Non-web builds (not part of
-    // the deployment) fall back to the production URL.
+    // resolves to ekincan.casim.net/data/resume.json. Non-web builds (not part
+    // of the deployment) fall back to the production URL.
     final uri = kIsWeb
         ? Uri.base.resolve('/data/resume.json')
-        : Uri.parse('https://casim.net/data/resume.json');
+        : Uri.parse('https://ekincan.casim.net/data/resume.json');
 
     final response = await http.get(uri);
     if (response.statusCode != 200) {

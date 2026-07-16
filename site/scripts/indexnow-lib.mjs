@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { basename, dirname, extname, resolve } from 'node:path';
 
-export const INDEXNOW_HOST = 'casim.net';
+export const INDEXNOW_HOST = 'ekincan.casim.net';
 export const CANONICAL_ORIGIN = new URL(`https://${INDEXNOW_HOST}/`);
 export const INDEXNOW_ENDPOINT = 'https://api.indexnow.org/indexnow';
 export const MAX_URLS_PER_BATCH = 1000;

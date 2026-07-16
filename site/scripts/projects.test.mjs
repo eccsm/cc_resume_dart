@@ -55,7 +55,10 @@ test('each project produces the expected static route and canonical URL', () => 
   assert.deepEqual(routes, expectedRoutes);
 
   const canonicals = projects.map((project) => getProjectCanonicalUrl(project));
-  assert.deepEqual(canonicals, expectedRoutes.map((route) => `https://casim.net${route}`));
+  assert.deepEqual(
+    canonicals,
+    expectedRoutes.map((route) => `https://ekincan.casim.net${route}`)
+  );
 });
 
 test('homepage projects anchor, nav link, and cards are wired to valid routes', async () => {

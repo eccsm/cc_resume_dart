@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://casim.net/sitemap-index.xml
+Sitemap: https://ekincan.casim.net/sitemap-index.xml

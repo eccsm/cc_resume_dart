@@ -2,6 +2,7 @@
 import Footer from '../../components/Footer.astro';
 import SiteNav from '../../components/SiteNav.astro';
 import {
+  canonicalOrigin,
   getCaseStudyBySlug,
   getCaseStudyPath,
   getProjectCanonicalUrl,
@@ -41,13 +42,13 @@ const breadcrumbJsonLd = {
       '@type': 'ListItem',
       position: 1,
       name: 'Home',
-      item: 'https://casim.net/',
+      item: `${canonicalOrigin}/`,
     },
     {
       '@type': 'ListItem',
       position: 2,
       name: 'Projects',
-      item: `https://casim.net${homepageProjectsHref}`,
+      item: `${canonicalOrigin}${homepageProjectsHref}`,
     },
     {
       '@type': 'ListItem',

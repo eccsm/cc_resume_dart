@@ -15,7 +15,7 @@ export interface Profile {
   tagline: string;
 }
 
-export const canonicalOrigin = 'https://casim.net';
+export const canonicalOrigin = 'https://ekincan.casim.net';
 export const homepageCaseStudiesHref = '/#case-studies';
 export const homepageProjectsHref = '/#projects';
 
