@@ -1,7 +1,7 @@
 # casim.net — portfolio monorepo
 
 One repo, one deployment. The Astro site is the shell served at
-[casim.net](https://casim.net); the Flutter app is embedded in it as a
+[ekincan.casim.net](https://ekincan.casim.net); the Flutter app is embedded in it as a
 lazy-loaded "interactive mode" overlay.
 
 ## Layout

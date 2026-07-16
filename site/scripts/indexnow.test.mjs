@@ -28,31 +28,31 @@ test('validateIndexNowKey accepts safe keys and rejects invalid ones', () => {
 
 test('normalizeIndexNowUrl forces https, strips fragments, and rejects non-canonical hosts', () => {
   const url = normalizeIndexNowUrl('/#experience');
-  assert.equal(url.toString(), 'https://casim.net/');
+  assert.equal(url.toString(), 'https://ekincan.casim.net/');
 
-  const absolute = normalizeIndexNowUrl('http://casim.net/projects?x=1#top');
-  assert.equal(absolute.toString(), 'https://casim.net/projects?x=1');
+  const absolute = normalizeIndexNowUrl('http://ekincan.casim.net/projects?x=1#top');
+  assert.equal(absolute.toString(), 'https://ekincan.casim.net/projects?x=1');
 
-  assert.throws(() => normalizeIndexNowUrl('https://ekincan.casim.net/'), /casim\.net/);
-  assert.throws(() => normalizeIndexNowUrl('https://localhost:4321/'), /casim\.net/);
+  assert.throws(() => normalizeIndexNowUrl('https://casim.net/'), /ekincan\.casim\.net/);
+  assert.throws(() => normalizeIndexNowUrl('https://localhost:4321/'), /ekincan\.casim\.net/);
 });
 
 test('normalizeIndexableUrls deduplicates URLs and filters assets and verification files', () => {
   const urls = normalizeIndexableUrls([
     '/',
-    'https://casim.net/#case-studies',
-    'https://casim.net/assets/flutter/hash/index.html',
-    'https://casim.net/robots.txt',
-    'https://casim.net/about/',
-    'https://casim.net/about/',
+    'https://ekincan.casim.net/#case-studies',
+    'https://ekincan.casim.net/assets/flutter/hash/index.html',
+    'https://ekincan.casim.net/robots.txt',
+    'https://ekincan.casim.net/about/',
+    'https://ekincan.casim.net/about/',
   ]);
 
-  assert.deepEqual(urls, ['https://casim.net/', 'https://casim.net/about/']);
+  assert.deepEqual(urls, ['https://ekincan.casim.net/', 'https://ekincan.casim.net/about/']);
 });
 
 test('chunkUrls batches well below the IndexNow limit', () => {
   const urls = Array.from({ length: MAX_URLS_PER_BATCH * 2 + 1 }, (_, index) =>
-    `https://casim.net/page-${index}/`
+    `https://ekincan.casim.net/page-${index}/`
   );
   const batches = chunkUrls(urls);
 
@@ -64,34 +64,34 @@ test('chunkUrls batches well below the IndexNow limit', () => {
 
 test('parseSitemap and loadSitemapUrls support sitemap indexes and urlsets', async () => {
   const indexXml =
-    '<?xml version="1.0"?><sitemapindex><sitemap><loc>https://casim.net/sitemap-0.xml</loc></sitemap></sitemapindex>';
+    '<?xml version="1.0"?><sitemapindex><sitemap><loc>https://ekincan.casim.net/sitemap-0.xml</loc></sitemap></sitemapindex>';
   const pageXml =
-    '<?xml version="1.0"?><urlset><url><loc>https://casim.net/</loc></url><url><loc>https://casim.net/about/</loc></url></urlset>';
+    '<?xml version="1.0"?><urlset><url><loc>https://ekincan.casim.net/</loc></url><url><loc>https://ekincan.casim.net/about/</loc></url></urlset>';
 
   assert.deepEqual(parseSitemap(pageXml), {
     type: 'urlset',
-    locs: ['https://casim.net/', 'https://casim.net/about/'],
+    locs: ['https://ekincan.casim.net/', 'https://ekincan.casim.net/about/'],
   });
 
   const loadText = async (source) => {
-    if (source === 'https://casim.net/sitemap-index.xml') return indexXml;
-    if (source === 'https://casim.net/sitemap-0.xml') return pageXml;
+    if (source === 'https://ekincan.casim.net/sitemap-index.xml') return indexXml;
+    if (source === 'https://ekincan.casim.net/sitemap-0.xml') return pageXml;
     throw new Error(`Unexpected sitemap source: ${source}`);
   };
 
-  const urls = await loadSitemapUrls('https://casim.net/sitemap-index.xml', { loadText });
-  assert.deepEqual(urls, ['https://casim.net/', 'https://casim.net/about/']);
+  const urls = await loadSitemapUrls('https://ekincan.casim.net/sitemap-index.xml', { loadText });
+  assert.deepEqual(urls, ['https://ekincan.casim.net/', 'https://ekincan.casim.net/about/']);
 });
 
 test('loadSitemapUrls resolves nested sitemap files locally during dry runs', async () => {
   const files = new Map([
     [
       'C:/site/dist/sitemap-index.xml',
-      '<?xml version="1.0"?><sitemapindex><sitemap><loc>https://casim.net/sitemap-0.xml</loc></sitemap></sitemapindex>',
+      '<?xml version="1.0"?><sitemapindex><sitemap><loc>https://ekincan.casim.net/sitemap-0.xml</loc></sitemap></sitemapindex>',
     ],
     [
       'C:/site/dist/sitemap-0.xml',
-      '<?xml version="1.0"?><urlset><url><loc>https://casim.net/</loc></url><url><loc>https://casim.net/case-studies/allianz-core-transformation/</loc></url></urlset>',
+      '<?xml version="1.0"?><urlset><url><loc>https://ekincan.casim.net/</loc></url><url><loc>https://ekincan.casim.net/case-studies/allianz-core-transformation/</loc></url></urlset>',
     ],
   ]);
 
@@ -106,8 +106,8 @@ test('loadSitemapUrls resolves nested sitemap files locally during dry runs', as
   });
 
   assert.deepEqual(urls, [
-    'https://casim.net/',
-    'https://casim.net/case-studies/allianz-core-transformation/',
+    'https://ekincan.casim.net/',
+    'https://ekincan.casim.net/case-studies/allianz-core-transformation/',
   ]);
 });
 
@@ -123,28 +123,32 @@ test('current sitemap-style URL sets remain homepage plus canonical project and 
   };
 
   assert.deepEqual(getCaseStudyUrlsFromResume(resume), [
-    'https://casim.net/case-studies/allianz-core-transformation/',
-    'https://casim.net/case-studies/insurance-ddd-kafka/',
-    'https://casim.net/case-studies/genai-hr-chatbot/',
-    'https://casim.net/case-studies/harmoni-modernization/',
+    'https://ekincan.casim.net/case-studies/allianz-core-transformation/',
+    'https://ekincan.casim.net/case-studies/insurance-ddd-kafka/',
+    'https://ekincan.casim.net/case-studies/genai-hr-chatbot/',
+    'https://ekincan.casim.net/case-studies/harmoni-modernization/',
   ]);
   assert.deepEqual(getProjectUrlsFromResume(resume), [
-    'https://casim.net/projects/archmet/',
-    'https://casim.net/projects/harmonova/',
+    'https://ekincan.casim.net/projects/archmet/',
+    'https://ekincan.casim.net/projects/harmonova/',
   ]);
 
   assert.deepEqual(
     normalizeIndexableUrls([
-      'https://casim.net/',
-      'https://casim.net/#experience',
-      'https://casim.net/#projects',
-      'https://casim.net/#case-studies',
-      'https://casim.net/assets/flutter/2b9f573/index.html',
+      'https://ekincan.casim.net/',
+      'https://ekincan.casim.net/#experience',
+      'https://ekincan.casim.net/#projects',
+      'https://ekincan.casim.net/#case-studies',
+      'https://ekincan.casim.net/assets/flutter/2b9f573/index.html',
       ...getProjectUrlsFromResume(resume),
       ...getCaseStudyUrlsFromResume(resume),
-      'https://casim.net/BingSiteAuth.xml',
+      'https://ekincan.casim.net/BingSiteAuth.xml',
     ]),
-    ['https://casim.net/', ...getProjectUrlsFromResume(resume), ...getCaseStudyUrlsFromResume(resume)]
+    [
+      'https://ekincan.casim.net/',
+      ...getProjectUrlsFromResume(resume),
+      ...getCaseStudyUrlsFromResume(resume),
+    ]
   );
 });
 
@@ -171,7 +175,7 @@ test('deriveRoutesFromChangedFiles maps static Astro pages and falls back for si
 test('getIndexNowKeyLocation builds the canonical verification URL', () => {
   assert.equal(
     getIndexNowKeyLocation('abc12345-KEY'),
-    'https://casim.net/abc12345-KEY.txt'
+    'https://ekincan.casim.net/abc12345-KEY.txt'
   );
 });
 
@@ -191,10 +195,10 @@ test('legacy case-study URLs are preserved for notifications after slug changes'
   };
 
   assert.deepEqual(diffRemovedCaseStudyUrls(previousResume, currentResume), [
-    'https://casim.net/case-studies/legacy-allianz/',
+    'https://ekincan.casim.net/case-studies/legacy-allianz/',
   ]);
   assert.deepEqual(getLegacyCaseStudyUrlsFromResume(currentResume), [
-    'https://casim.net/case-studies/legacy-allianz/',
+    'https://ekincan.casim.net/case-studies/legacy-allianz/',
   ]);
 });
 
@@ -208,9 +212,9 @@ test('legacy project URLs are preserved for notifications after slug changes', (
   };
 
   assert.deepEqual(diffRemovedProjectUrls(previousResume, currentResume), [
-    'https://casim.net/projects/legacy-archmet/',
+    'https://ekincan.casim.net/projects/legacy-archmet/',
   ]);
   assert.deepEqual(getLegacyProjectUrlsFromResume(currentResume), [
-    'https://casim.net/projects/legacy-archmet/',
+    'https://ekincan.casim.net/projects/legacy-archmet/',
   ]);
 });

@@ -55,7 +55,10 @@ test('each case study produces the expected static route and canonical URL', () 
   assert.deepEqual(routes, expectedRoutes);
 
   const canonicals = caseStudies.map((caseStudy) => getCaseStudyCanonicalUrl(caseStudy));
-  assert.deepEqual(canonicals, expectedRoutes.map((route) => `https://casim.net${route}`));
+  assert.deepEqual(
+    canonicals,
+    expectedRoutes.map((route) => `https://ekincan.casim.net${route}`)
+  );
 });
 
 test('homepage case study anchor and route set exclude unknown slugs', () => {
@@ -71,7 +74,7 @@ test('legacy case study route changes remain valid and collision-free', () => {
     assert.ok(routeChange.fromSlug.length > 0);
     assert.equal(
       getLegacyCaseStudyCanonicalUrl(routeChange),
-      `https://casim.net/case-studies/${routeChange.fromSlug}/`
+      `https://ekincan.casim.net/case-studies/${routeChange.fromSlug}/`
     );
   }
 });

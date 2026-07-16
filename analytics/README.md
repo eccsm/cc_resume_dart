@@ -43,17 +43,17 @@ Cookies on casim.net should list nothing from stats.casim.net.
 
 ## Required headers on stats.casim.net (COEP)
 
-casim.net runs **cross-origin isolated** (`Cross-Origin-Embedder-Policy:
+ekincan.casim.net runs **cross-origin isolated** (`Cross-Origin-Embedder-Policy:
 require-corp` — WebLLM in the Flutter island needs it). The tracking script
 tag uses `crossorigin="anonymous"`, so the reverse proxy in front of Umami
 must answer CORS/CORP or the browser refuses to load the script:
 
 ```
-Access-Control-Allow-Origin: https://casim.net
+Access-Control-Allow-Origin: https://ekincan.casim.net
 Cross-Origin-Resource-Policy: cross-origin
 ```
 
-(Caddy: `header Access-Control-Allow-Origin https://casim.net` etc.; nginx:
+(Caddy: `header Access-Control-Allow-Origin https://ekincan.casim.net` etc.; nginx:
 `add_header`.) Verify after deploy: the script shows no CORP/CORS error in
 the console and page views appear in the dashboard.
 
